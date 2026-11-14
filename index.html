@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>算額ラボ（Sangaku Lab）〜和算でひらめく探究ノート〜</title>
+<meta name="description" content="日本の伝統数学「算額」に挑戦する探究アプリ。動く図形、段階ヒント、御朱印スタンプ帳、先生用ワークシート作成、オリジナル算額メーカー付き。記録は端末の中だけに保存されます。">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta property="og:title" content="算額ラボ（Sangaku Lab）〜和算でひらめく探究ノート〜">
+<meta property="og:description" content="動く図形で算額に挑戦。ヒント、御朱印スタンプ帳、ワークシート作成、オリジナル算額メーカー。">
+<meta property="og:image" content="og.png">
+<meta name="theme-color" content="#264653">
+<style>
+:root{
+  --paper:#F9F6F0; --card:#FFFDF7; --wood:#D4A373; --wood-d:#B07D4F; --ink:#2B2B2B;
+  --shu:#C83232; --ai:#264653; --ai-l:#2A6F77; --line:#E2D5C0; --gold:#B8862F;
+  --serif:"Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; padding:0;}
+body{background:var(--paper); color:var(--ink);
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","BIZ UDGothic",sans-serif;
+  font-size:17px; line-height:1.65; padding-bottom:env(safe-area-inset-bottom);}
+body.no-ruby rt{display:none;}
+button{font:inherit; cursor:pointer;}
+h1,h2,h3,.serif{font-family:var(--serif);}
+/* ===== ヘッダー（絵馬ふう） ===== */
+header{background:linear-gradient(180deg,#8A5A33,#6E4525); color:#FFF7E8; padding:14px 14px 0;
+  border-bottom:6px solid var(--wood-d); position:relative;}
+header .rope{height:10px; background:repeating-linear-gradient(45deg,#7A2E2E 0 8px,#A33B3B 8px 16px); border-radius:5px; margin:0 auto 10px; max-width:860px; opacity:.85;}
+header h1{margin:0; text-align:center; font-size:clamp(1.7rem,6vw,2.5rem); letter-spacing:.14em; text-shadow:0 2px 0 rgba(0,0,0,.25);}
+header h1 .seal{display:inline-block; background:var(--shu); color:#fff; border-radius:6px; padding:0 .18em; margin-left:.15em; transform:rotate(3deg);}
+header p.sub{text-align:center; margin:2px 0 12px; font-size:.95rem; color:#F3E2C7;}
+.modes{display:flex; gap:8px; max-width:860px; margin:0 auto; flex-wrap:wrap;}
+.modes button{flex:1 1 150px; min-height:56px; border:none; border-radius:12px 12px 0 0; background:#A9805A; color:#FFF3DF;
+  font-weight:800; font-size:1rem; padding:8px 6px; opacity:.75;}
+.modes button.on{background:var(--paper); color:var(--ai); opacity:1; box-shadow:0 -3px 8px rgba(0,0,0,.15);}
+main{max-width:880px; margin:0 auto; padding:14px 12px 30px;}
+.view{display:none;} .view.on{display:block;}
+.card{background:var(--card); border:1.6px solid var(--line); border-radius:16px; padding:16px; margin-bottom:14px; box-shadow:0 2px 8px rgba(90,60,20,.06);}
+.card h2{margin:0 0 10px; font-size:1.25rem; color:var(--ai); border-bottom:2.5px double var(--wood); padding-bottom:5px;}
+.small{font-size:.88rem; color:#6B6257;}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:54px; padding:10px 20px;
+  border-radius:13px; border:2px solid var(--ai); background:var(--ai); color:#fff; font-weight:800; font-size:1.02rem; text-decoration:none;}
+.btn.sub{background:#fff; color:var(--ai);}
+.btn.shu{background:var(--shu); border-color:var(--shu);}
+.btn.gold{background:var(--gold); border-color:var(--gold);}
+.btn:disabled{opacity:.45; cursor:default;}
+.btn.sm{min-height:46px; padding:6px 14px; font-size:.95rem;}
+.toolbar{display:flex; gap:9px; flex-wrap:wrap; margin-top:12px;}
+input[type="text"],input[type="number"],textarea,select{font:inherit; padding:11px 12px; border:1.8px solid #C9B99B; border-radius:11px; background:#fff; width:100%;}
+input[type="range"]{width:100%; height:44px; accent-color:var(--ai); cursor:pointer;}
+label.lb{display:block; font-weight:700; margin:10px 0 4px;}
+/* ===== 問題カード ===== */
+.prob-list{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:11px;}
+.prob-item{border:2px solid var(--line); border-radius:14px; padding:13px; background:#fff; text-align:left; width:100%; position:relative;}
+.prob-item:hover{border-color:var(--wood);}
+.prob-item .lv{font-weight:900; color:var(--shu); font-size:.85rem; letter-spacing:.08em;}
+.prob-item .tt{font-weight:800; font-size:1.06rem; margin:2px 0;}
+.prob-item .stamp-mini{position:absolute; top:9px; right:9px; width:44px; height:44px; border:2.6px solid var(--shu); color:var(--shu);
+  border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--serif); font-weight:900; font-size:.62rem;
+  transform:rotate(-10deg); background:rgba(255,255,255,.75); text-align:center; line-height:1.15;}
+/* ===== 絵馬フレームとキャンバス ===== */
+.ema{background:linear-gradient(180deg,#C89B6A,#B98A56); border-radius:14px; padding:12px; box-shadow:inset 0 0 0 3px #8A5A33, 0 4px 14px rgba(90,60,20,.18);}
+.ema-inner{background:#FFFDF4; border-radius:8px; padding:8px;}
+svg.stage{width:100%; height:auto; display:block; touch-action:none;}
+svg text{user-select:none;}
+/* ===== ヒント ===== */
+.hint{border:1.6px solid var(--line); border-radius:12px; margin-bottom:9px; overflow:hidden;}
+.hint button.hhead{width:100%; text-align:left; background:#F3EAD8; border:none; padding:13px 14px; font-weight:800; font-size:1rem; min-height:52px;}
+.hint .hbody{display:none; padding:12px 14px; background:#fff;}
+.hint.open .hbody{display:block;}
+/* ===== 数式（教科書表記） ===== */
+.frac{display:inline-block; vertical-align:-.42em; text-align:center; margin:0 .12em;}
+.frac .num{display:block; padding:0 .22em; border-bottom:.075em solid currentColor; line-height:1.25;}
+.frac .den{display:block; padding:0 .22em; line-height:1.25;}
+.rad{border-top:.065em solid currentColor; padding:0 .08em 0 .04em; margin-left:.02em;}
+.var{font-family:"Times New Roman","Hiragino Mincho ProN",serif; font-style:italic;}
+/* ===== スタンプ演出 ===== */
+#stampFx{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:80; pointer-events:none;}
+#stampFx.on{display:flex;}
+#stampFx .big{width:210px; height:210px; border:7px solid var(--shu); color:var(--shu); border-radius:50%;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(255,253,247,.82);
+  font-family:var(--serif); font-weight:900; animation:stampIn .45s cubic-bezier(.2,2.2,.4,1) both;}
+#stampFx .big .t1{font-size:1.5rem; letter-spacing:.3em; margin-left:.3em;}
+#stampFx .big .t2{font-size:2rem; letter-spacing:.18em; margin-left:.18em;}
+@keyframes stampIn{0%{transform:scale(2.6) rotate(-24deg); opacity:0;} 100%{transform:scale(1) rotate(-10deg); opacity:1;}}
+/* ===== スタンプ帳 ===== */
+.stamp-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:11px;}
+.stamp-cell{border:1.6px dashed var(--line); border-radius:12px; padding:10px; text-align:center; background:#fff;}
+.stamp-cell .ring{width:74px; height:74px; margin:4px auto; border:3.4px solid #D8CBB2; color:#C9BBA0; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-family:var(--serif); font-weight:900; font-size:.8rem; line-height:1.2;}
+.stamp-cell.got .ring{border-color:var(--shu); color:var(--shu); transform:rotate(-9deg); background:rgba(200,50,50,.05);}
+.stamp-cell .nm{font-size:.85rem; font-weight:700;}
+/* ===== 先生用 ===== */
+.seg{display:flex; gap:8px; flex-wrap:wrap;}
+.seg button{flex:1 1 130px; min-height:52px; border-radius:12px; border:2px solid var(--ai); background:#fff; color:var(--ai); font-weight:800;}
+.seg button.on{background:var(--ai); color:#fff;}
+table.monitor{width:100%; border-collapse:collapse; font-size:.92rem;}
+table.monitor th,table.monitor td{border:1px solid var(--line); padding:6px 8px; text-align:left;}
+table.monitor th{background:#F3EAD8;}
+.st-ok{color:#2F7D4F; font-weight:800;} .st-hint{color:#B8862F; font-weight:800;} .st-stuck{color:var(--shu); font-weight:800;}
+.bar-row{display:flex; align-items:center; gap:9px; margin:5px 0;}
+.bar-row .bar{flex:1; background:#EFE6D2; border-radius:99px; height:16px; overflow:hidden;}
+.bar-row .bar i{display:block; height:100%; background:var(--ai-l);}
+/* ===== メーカー ===== */
+.palette{display:flex; gap:8px; flex-wrap:wrap;}
+.palette button{min-height:50px; padding:8px 14px; border-radius:12px; border:2px solid var(--wood-d); background:#FBF3E3; font-weight:800;}
+footer{max-width:880px; margin:0 auto; padding:0 12px 26px; color:#8A7B66; font-size:.85rem;}
+/* ===== 印刷シート ===== */
+#sheet{display:none;}
+  #sheet p{margin:4pt 0; line-height:1.5;}
+@media print{
+  body>*:not(#sheet){display:none !important;}
+  body{background:#fff;}
+  #sheet{display:block; color:#000; font-size:11.5pt;}
+  #sheet h1{font-size:16pt; margin:0 0 3pt; font-family:var(--serif);}
+  #sheet h2{font-size:12.5pt; margin:10pt 0 4pt; border-bottom:1.6pt solid #888; padding-bottom:2pt; font-family:var(--serif);}
+  #sheet .meta{display:flex; justify-content:space-between; border-bottom:2.4pt double #555; padding-bottom:4pt; margin-bottom:8pt;}
+  #sheet svg{width:100mm; height:auto; display:block; margin:4pt auto;}
+  #sheet .think{border:1.2pt solid #999; border-radius:4pt; margin-top:6pt;}
+  #sheet .foot{margin-top:8pt; font-size:9pt; color:#444;}
+  #sheet .cm5{width:50mm; border-top:2.4pt solid #000; margin-top:3pt; font-size:8.5pt;}
+  @page{size:A4 portrait; margin:12mm;}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="rope"></div>
+  <h1>算額ラボ<span class="seal">算額</span></h1>
+  <p class="sub">Sangaku Lab 〜<ruby>和算<rt>わさん</rt></ruby>でひらめく<ruby>探究<rt>たんきゅう</rt></ruby>ノート〜</p>
+  <nav class="modes" aria-label="モード切替">
+    <button id="modeStudent" class="on">🎓 生徒用：算額に挑戦！</button>
+    <button id="modeTeacher">🏫 先生用：授業ダッシュボード</button>
+    <button id="modeMaker">🔨 オリジナル算額メーカー</button>
+  </nav>
+</header>
+<main>
+<!-- ================= 生徒用 ================= -->
+<section id="viewStudent" class="view on">
+  <div id="studentList">
+    <div class="card">
+      <h2>⛩ <ruby>算額<rt>さんがく</rt></ruby>をえらぶ</h2>
+      <p class="small" style="margin-top:0">江戸時代の人たちは、数学の問題を<ruby>絵馬<rt>えま</rt></ruby>に書いて神社に<ruby>奉納<rt>ほうのう</rt></ruby>しました。それが「算額」です。解けたら<ruby>御朱印<rt>ごしゅいん</rt></ruby>スタンプがもらえます。</p>
+      <div class="prob-list" id="probList"></div>
+      <div class="toolbar">
+        <button class="btn sub" id="openStamps">📕 御朱印スタンプ帳を見る</button>
+        <button class="btn sub" id="tgRuby">ふりがな：ON</button>
+        <button class="btn sub" id="tgMute">音：ON</button>
+      </div>
+      <p class="small">記録はこの端末の中にだけ保存されます。アカウントは要りません。</p>
+    </div>
+  </div>
+  <div id="studentPlay" style="display:none">
+    <div class="card">
+      <div class="toolbar" style="margin:0 0 8px"><button class="btn sub sm" id="backToList">← 算額一覧へもどる</button>
+      <span class="small" id="playSolved"></span></div>
+      <h2 id="playTitle"></h2>
+      <div id="playStem" style="margin-bottom:10px"></div>
+      <div class="ema"><div class="ema-inner"><svg class="stage" id="stageSvg" viewBox="0 0 640 480" aria-label="算額の図"></svg></div></div>
+      <div id="playSliders"></div>
+      <div class="card" style="margin:12px 0 0; padding:13px">
+        <b>📐 観察メモ（動かすとどうなる？）</b>
+        <div id="playReadout" style="margin-top:5px"></div>
+      </div>
+      <div class="card" style="margin:12px 0 0; padding:13px">
+        <b>✏️ <ruby>補助線<rt>ほじょせん</rt></ruby>お絵描きツール</b>
+        <div class="toolbar" style="margin-top:8px">
+          <button class="btn sub sm" id="drawToggle">補助線モード：OFF</button>
+          <button class="btn sub sm drawColor" data-c="#264653">藍色</button>
+          <button class="btn sub sm drawColor" data-c="#C83232">朱色</button>
+          <button class="btn sub sm" id="drawUndo">1つ消す</button>
+          <button class="btn sub sm" id="drawClear">全部消す</button>
+        </div>
+        <p class="small" style="margin:6px 0 0">補助線モードをONにして、図の上で指やマウスを動かすと線が引けます。</p>
+      </div>
+      <div style="margin-top:14px" id="playHints"></div>
+      <div class="card" style="padding:13px">
+        <b>🔢 答えを入力</b>
+        <div id="playAnswers"></div>
+        <div class="toolbar"><button class="btn shu" id="playCheck" style="font-size:1.1rem">奉納する（答え合わせ）</button></div>
+        <p id="playMsg" style="margin:8px 0 0; font-weight:800"></p>
+      </div>
+      <div class="card" id="explainCard" style="display:none; padding:13px">
+        <b>🎉 視覚解説 ― なぜその答えになるの？</b>
+        <div id="explainBody" style="margin-top:6px"></div>
+      </div>
+    </div>
+  </div>
+  <div id="stampBook" style="display:none">
+    <div class="card">
+      <div class="toolbar" style="margin:0 0 8px"><button class="btn sub sm" id="backFromStamps">← 算額一覧へもどる</button></div>
+      <h2>📕 御朱印スタンプ帳</h2>
+      <p class="small" style="margin-top:0">解けた算額の印が、ここに集まります。</p>
+      <div class="stamp-grid" id="stampGrid"></div>
+    </div>
+  </div>
+</section>
+<!-- ================= 先生用 ================= -->
+<section id="viewTeacher" class="view">
+  <div class="card">
+    <h2>🏫 授業ダッシュボード</h2>
+    <div class="seg" role="tablist">
+      <button id="tTabPresent" class="on">一斉提示モード</button>
+      <button id="tTabSheet">ワークシート作成</button>
+      <button id="tTabMonitor">クラス進捗モニター</button>
+    </div>
+  </div>
+  <div id="tPresent">
+    <div class="card">
+      <label class="lb" for="presProb">提示する算額</label>
+      <select id="presProb"></select>
+      <div class="ema" style="margin-top:12px"><div class="ema-inner"><svg class="stage" id="presSvg" viewBox="0 0 640 480" aria-label="提示用の図"></svg></div></div>
+      <div id="presSliders"></div>
+      <div class="toolbar">
+        <button class="btn" id="presAux">補助線（解法）：隠す</button>
+        <button class="btn sub" id="presAns">答え：隠す</button>
+        <button class="btn gold" id="presFull">⛶ 大きく表示（全画面）</button>
+      </div>
+      <div id="presAnsBox" style="display:none; margin-top:10px; font-weight:800"></div>
+      <p class="small">プロジェクターや電子黒板に映すための画面です。スライダーで図を動かしながら発問できます。</p>
+    </div>
+  </div>
+  <div id="tSheet" style="display:none">
+    <div class="card">
+      <h2 style="border:none; margin-bottom:4px">🖨 ワークシート自動生成</h2>
+      <label class="lb" for="sheetProb">問題</label>
+      <select id="sheetProb"></select>
+      <label class="lb">プリントの種類</label>
+      <div class="seg">
+        <button id="sheetKindStudent" class="on">生徒用（問題＋考えるスペース＋振り返り）</button>
+        <button id="sheetKindTeacher">先生用（＋詳しい解説・歴史・指導ポイント）</button>
+      </div>
+      <div class="toolbar"><button class="btn" id="sheetPrint">🖨 印刷・PDF出力（A4縦 1枚）</button></div>
+      <div id="sheetPreview" style="border:1.6px dashed var(--line); border-radius:12px; padding:14px; margin-top:12px; background:#fff"></div>
+      <p class="small">印刷はA4縦・ちょうど1枚に収まる設計です。下部の「5cm確認線」で実寸を確認できます。</p>
+    </div>
+  </div>
+  <div id="tMonitor" style="display:none">
+    <div class="card">
+      <h2 style="border:none; margin-bottom:4px">👀 擬似クラス進捗モニター <span class="small" style="color:var(--shu); font-weight:800">※デモ表示（ダミーデータ）</span></h2>
+      <p class="small" style="margin-top:0">実際の児童・生徒のデータは集めていません。授業での見取りのイメージをつかむためのダミー表示です。</p>
+      <div id="monitorSummary"></div>
+      <div style="overflow-x:auto"><table class="monitor" id="monitorTable"></table></div>
+      <h3 style="margin:14px 0 4px">補助線アプローチの傾向（ダミー）</h3>
+      <div id="monitorTrend"></div>
+    </div>
+  </div>
+</section>
+<!-- ================= メーカー ================= -->
+<section id="viewMaker" class="view">
+  <div class="card">
+    <h2>🔨 オリジナル算額メーカー</h2>
+    <p class="small" style="margin-top:0">図形を置いて、問題文と答えを設定すると、自分だけの絵馬（算額）が作れます。作った算額は「生徒用」に並び、解くことも、ワークシートにすることもできます。</p>
+    <div class="ema"><div class="ema-inner"><svg class="stage" id="mkSvg" viewBox="0 0 640 480" aria-label="メーカーのキャンバス"></svg></div></div>
+    <div class="palette" style="margin-top:12px">
+      <button data-add="square">⬛ 正方形</button>
+      <button data-add="circle">⭕ 円</button>
+      <button data-add="triangle">🔺 正三角形</button>
+      <button data-add="line">📏 補助線</button>
+    </div>
+    <div id="mkSelBox" style="display:none; margin-top:10px">
+      <b id="mkSelName"></b>
+      <label class="lb" for="mkSize">大きさ</label>
+      <input type="range" id="mkSize" min="30" max="220" step="2">
+      <div class="toolbar">
+        <button class="btn sub sm" id="mkRotate">↻ 少し回す</button>
+        <button class="btn sub sm" id="mkDelete">この図形を消す</button>
+      </div>
+      <p class="small">図形はドラッグで動かせます。補助線は置いたあと、両端をドラッグして長さと向きを変えられます。</p>
+    </div>
+    <label class="lb" for="mkTitle">算額のタイトル</label>
+    <input type="text" id="mkTitle" placeholder="例：まる と しかく の もんだい">
+    <label class="lb" for="mkStem">問題文</label>
+    <textarea id="mkStem" rows="3" placeholder="例：正方形の中に、ぴったり入る円があります。円の面積を求めましょう。"></textarea>
+    <label class="lb" for="mkAnswer">答え（数字）</label>
+    <input type="number" id="mkAnswer" step="any" placeholder="例：78.5">
+    <label class="lb" for="mkUnit">単位</label>
+    <input type="text" id="mkUnit" placeholder="例：cm²">
+    <label class="lb" for="mkExplain">解けた人への解説メモ（任意）</label>
+    <textarea id="mkExplain" rows="2" placeholder="例：円の半径は、正方形の一辺の半分です。"></textarea>
+    <div class="toolbar">
+      <button class="btn shu" id="mkSave">🎋 この内容で絵馬を作る</button>
+      <button class="btn sub" id="mkReset">キャンバスを空にする</button>
+    </div>
+    <p id="mkMsg" style="font-weight:800; margin:8px 0 0"></p>
+    <div id="mkList" style="margin-top:12px"></div>
+  </div>
+</section>
+</main>
+<footer>
+  <p>算額ラボ（Sangaku Lab）v1.0 ― 記録はこの端末の中にだけ保存され、外に送られることはありません。不具合が出るかもしれません。実際にご使用の際に不具合がありましたら、コメント欄からお知らせください。</p>
+</footer>
+<div id="stampFx"><div class="big"><span class="t1">奉納</span><span class="t2">解決済</span></div></div>
+<div id="sheet"></div>
+<script>
+"use strict";
+/* ================= 汎用 ================= */
+const $ = id => document.getElementById(id);
+const SVGNS = 'http://www.w3.org/2000/svg';
+function el(name, attrs, parent){ const e = document.createElementNS(SVGNS, name);
+  for(const k in attrs) e.setAttribute(k, attrs[k]); if(parent) parent.appendChild(e); return e; }
+function txt(parent, x, y, s, size, opts){ const t = el('text', {x, y, 'font-size': size || 17, 'text-anchor': 'middle',
+  fill: (opts && opts.fill) || '#2B2B2B', 'font-weight': (opts && opts.bold) ? 800 : 400,
+  'font-family': (opts && opts.serif) ? '"Times New Roman","Hiragino Mincho ProN",serif' : 'inherit',
+  'font-style': (opts && opts.italic) ? 'italic' : 'normal'}, parent); t.textContent = s; return t; }
+function fmt(n, d){ const p = Math.pow(10, d == null ? 2 : d); const v = Math.round(n * p) / p;
+  return (Math.abs(v - Math.round(v)) < 1e-9) ? String(Math.round(v)) : String(v); }
+const LSKEY = 'sangaku-lab-v1';
+let store = { solved: {}, custom: [], settings: { ruby: true, mute: false } };
+try{ const raw = localStorage.getItem(LSKEY); if(raw){ const p = JSON.parse(raw);
+  if(p && typeof p === 'object'){ store.solved = p.solved || {}; store.custom = p.custom || [];
+    store.settings = Object.assign(store.settings, p.settings || {}); } } }catch(e){}
+function save(){ try{ localStorage.setItem(LSKEY, JSON.stringify(store)); }catch(e){} }
+let AC = null;
+function beep(f, t0, dur, type, vol){ try{ AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+  const o = AC.createOscillator(), g = AC.createGain(); o.type = type || 'sine'; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, AC.currentTime + t0); g.gain.exponentialRampToValueAtTime(vol || .18, AC.currentTime + t0 + .02);
+  g.gain.exponentialRampToValueAtTime(.001, AC.currentTime + t0 + dur);
+  o.connect(g); g.connect(AC.destination); o.start(AC.currentTime + t0); o.stop(AC.currentTime + t0 + dur + .02); }catch(e){} }
+function sndOK(){ if(store.settings.mute) return; beep(1318.5, 0, .16); beep(1760, .11, .24); }
+function sndStamp(){ if(store.settings.mute) return; beep(523.25, 0, .12, 'sine', .22); beep(1046.5, .05, .2, 'sine', .12); }
+function sndNG(){ if(store.settings.mute) return; beep(1318.5, 0, .13); beep(1046.5, .11, .22); }
+/* ================= 算額の問題モジュール =================
+   各問題は「パラメータ→図・数値・答え」をすべて同じ計算から作る。
+   図と問題文と答えが食い違うことはない。 */
+const PI314 = 3.14;
+const PROBLEMS = [
+{
+  id: 'lv1', level: 'Lv.1', title: '正方形と円と三角形',
+  params: () => ({ a: 10 }),
+  sliders: [ { key: 'a', label: '正方形の一辺', min: 6, max: 14, step: 0.5, unit: 'cm' } ],
+  stem: P => '一辺が <span class="var">a</span> ＝ ' + fmt(P.a, 1) + ' cm の正方形の中に、ぴったりと円が<ruby>内接<rt>ないせつ</rt></ruby>しています。'
+    + '正方形の<ruby>対角線<rt>たいかくせん</rt></ruby>を1本引くと、三角形ができます。<br>'
+    + '（1）円の<ruby>面積<rt>めんせき</rt></ruby>　（2）三角形の面積　を求めましょう。円周率は 3.14 とします。',
+  layout: P => { const S = P.a * 24, cx = 320, cy = 232; return { S, x0: cx - S / 2, y0: cy - S / 2, cx, cy }; },
+  draw(g, P){
+    const L = this.layout(P), S = L.S, x0 = L.x0, y0 = L.y0;
+    el('rect', { x: x0, y: y0, width: S, height: S, fill: '#FBF3E3', stroke: '#2B2B2B', 'stroke-width': 2.6 }, g);
+    el('circle', { cx: L.cx, cy: L.cy, r: S / 2, fill: 'rgba(38,70,83,.10)', stroke: '#264653', 'stroke-width': 2.4 }, g);
+    const tri = el('polygon', { points: `${x0},${y0 + S} ${x0 + S},${y0 + S} ${x0 + S},${y0}`,
+      fill: 'rgba(200,50,50,.20)', stroke: '#C83232', 'stroke-width': 2.2 }, g);
+    txt(g, L.cx, y0 + S + 30, 'a ＝ ' + fmt(P.a, 1) + ' cm', 18, { bold: true });
+    return { handles: [ { x: x0 + S, y: y0 + S, apply: (dx, dy, P0) => ({ a: Math.min(14, Math.max(6, P0.a + dx / 24)) }) } ], animTri: tri };
+  },
+  solution(g, P){
+    const L = this.layout(P), S = L.S, x0 = L.x0, y0 = L.y0;
+    el('line', { x1: x0, y1: y0 + S, x2: x0 + S, y2: y0, stroke: '#C83232', 'stroke-width': 3.4 }, g);
+    el('line', { x1: L.cx, y1: L.cy, x2: x0 + S, y2: L.cy, stroke: '#264653', 'stroke-width': 3, 'stroke-dasharray': '7 5' }, g);
+    el('circle', { cx: L.cx, cy: L.cy, r: 4.5, fill: '#264653' }, g);
+    txt(g, L.cx + S / 4, L.cy - 10, '半径 ＝ a ÷ 2', 16, { bold: true, fill: '#264653' });
+  },
+  compute(P){
+    const r = P.a / 2;
+    return { answers: [
+        { key: 'c', label: '（1）円の面積', value: PI314 * r * r, unit: 'cm²', tol: 0.8 },
+        { key: 't', label: '（2）三角形の面積', value: P.a * P.a / 2, unit: 'cm²', tol: 0.8 } ],
+      readouts: [
+        { label: '正方形の面積', value: fmt(P.a * P.a, 1) + ' cm²' },
+        { label: '円の面積 ÷ 正方形の面積', value: fmt(PI314 / 4, 3) + '（大きさを変えても変わらない！）' },
+        { label: '三角形の面積 ÷ 正方形の面積', value: '0.5（いつも ちょうど半分）' } ] };
+  },
+  hints: [
+    '円の<ruby>直径<rt>ちょっけい</rt></ruby>は、正方形の一辺と ぴったり同じ長さです。半径はその半分。',
+    '補助線として、対角線と、中心から辺への半径を引いてみましょう。（このヒントを開くと、図に補助線が出ます）',
+    '円の面積 ＝ 3.14 × 半径 × 半径。三角形は「底辺 × 高さ ÷ 2」で、底辺も高さも一辺 <span class="var">a</span> と同じです。つまり正方形の面積の半分です。'
+  ],
+  explain: P => '三角形は、対角線で正方形を半分に切った形です。だから面積は ' + fmt(P.a * P.a, 1) + ' ÷ 2 ＝ <b>' + fmt(P.a * P.a / 2, 1) + ' cm²</b>。'
+    + '円の半径は一辺の半分（' + fmt(P.a / 2, 1) + ' cm）なので、円の面積は 3.14 × ' + fmt(P.a / 2, 1) + ' × ' + fmt(P.a / 2, 1) + ' ＝ <b>' + fmt(PI314 * Math.pow(P.a / 2, 2), 2) + ' cm²</b>。'
+    + 'スライダーで大きさを変えても、「円 ÷ 正方形 ≒ 0.785」「三角形 ÷ 正方形 ＝ 0.5」という比は変わりません。これが算額の面白さです。',
+  animate(g, P, fig){
+    const L = this.layout(P), S = L.S, x0 = L.x0, y0 = L.y0;
+    const cover = el('polygon', { points: `${x0},${y0} ${x0 + S},${y0} ${x0},${y0 + S}`, fill: 'rgba(255,255,255,.65)' }, g);
+    if(fig && fig.animTri){ fig.animTri.style.transition = 'transform 900ms ease'; }
+    setTimeout(() => { if(fig && fig.animTri) fig.animTri.style.transform = 'translateY(16px)'; }, 350);
+    setTimeout(() => { if(fig && fig.animTri) fig.animTri.style.transform = ''; }, 1500);
+    txt(g, L.cx, y0 - 16, '対角線で ちょうど半分！', 19, { bold: true, fill: '#C83232' });
+  },
+  history: '正方形と内接円の面積比べは、和算の入門として各地の算額に残る形です。江戸時代の和算家たちは、円の面積の比が大きさによらないことを、図の美しさとともに絵馬に残しました。',
+  guide: 'まずスライダーで大きさを変えさせ、「変わらないもの」を探させるのが要点です。対角線を引く前に「三角形の面積は正方形のどれくらいに見える？」と予想させると、半分という結果が印象に残ります。'
+},
+{
+  id: 'lv2', level: 'Lv.2', title: '直角三角形と内接円',
+  params: () => ({ k: 2 }),
+  sliders: [ { key: 'k', label: '辺の長さの倍率 k（3辺は 3k・4k・5k）', min: 1, max: 3, step: 0.25, unit: '' } ],
+  stem: P => '直角三角形の3辺の長さは、短い順に ' + fmt(3 * P.k, 2) + ' cm、' + fmt(4 * P.k, 2) + ' cm、' + fmt(5 * P.k, 2) + ' cm です（3：4：5 の比）。'
+    + 'この三角形にぴったり<ruby>内接<rt>ないせつ</rt></ruby>する円の、<ruby>半径<rt>はんけい</rt></ruby> <span class="var">r</span> と面積を求めましょう。円周率は 3.14 とします。',
+  layout: P => { const u = 30, Bx = 118, By = 384; return { u, Bx, By, Ax: Bx, Ay: By - 3 * P.k * u, Cx: Bx + 4 * P.k * u, Cy: By }; },
+  draw(g, P){
+    const L = this.layout(P), u = L.u;
+    const ix = L.Bx + P.k * u, iy = L.By - P.k * u;
+    el('polygon', { points: `${L.Bx},${L.By} ${L.Ax},${L.Ay} ${L.Cx},${L.Cy}`, fill: '#FBF3E3', stroke: '#2B2B2B', 'stroke-width': 2.6 }, g);
+    el('path', { d: `M ${L.Bx + 16} ${L.By} L ${L.Bx + 16} ${L.By - 16} L ${L.Bx} ${L.By - 16}`, fill: 'none', stroke: '#2B2B2B', 'stroke-width': 2 }, g);
+    el('circle', { cx: ix, cy: iy, r: P.k * u, fill: 'rgba(38,70,83,.12)', stroke: '#264653', 'stroke-width': 2.4 }, g);
+    txt(g, L.Bx - 14, (L.Ay + L.By) / 2, fmt(3 * P.k, 2), 17, { bold: true });
+    txt(g, (L.Bx + L.Cx) / 2, L.By + 26, fmt(4 * P.k, 2) + ' cm', 17, { bold: true });
+    txt(g, (L.Ax + L.Cx) / 2 + 24, (L.Ay + L.Cy) / 2 - 8, fmt(5 * P.k, 2), 17, { bold: true });
+    return { handles: [ { x: L.Cx, y: L.Cy, apply: (dx, dy, P0) => ({ k: Math.min(3, Math.max(1, P0.k + dx / (4 * u))) }) } ] };
+  },
+  solution(g, P){
+    const L = this.layout(P), u = L.u, r = P.k;
+    const ix = L.Bx + r * u, iy = L.By - r * u;
+    const fx = ix + (4 * r * u * 0.8), fy = iy + (4 * r * u * 0.6); /* 斜辺への足の近似位置（方向は法線） */
+    const t = ((ix - L.Ax) * (L.Cx - L.Ax) + (iy - L.Ay) * (L.Cy - L.Ay)) / (Math.pow(L.Cx - L.Ax, 2) + Math.pow(L.Cy - L.Ay, 2));
+    const hx = L.Ax + t * (L.Cx - L.Ax), hy = L.Ay + t * (L.Cy - L.Ay);
+    el('line', { x1: ix, y1: iy, x2: L.Bx, y2: iy, stroke: '#264653', 'stroke-width': 3 }, g);
+    el('line', { x1: ix, y1: iy, x2: ix, y2: L.By, stroke: '#264653', 'stroke-width': 3 }, g);
+    el('line', { x1: ix, y1: iy, x2: hx, y2: hy, stroke: '#264653', 'stroke-width': 3 }, g);
+    el('line', { x1: ix, y1: iy, x2: L.Ax, y2: L.Ay, stroke: '#C83232', 'stroke-width': 2.2, 'stroke-dasharray': '7 5' }, g);
+    el('line', { x1: ix, y1: iy, x2: L.Cx, y2: L.Cy, stroke: '#C83232', 'stroke-width': 2.2, 'stroke-dasharray': '7 5' }, g);
+    el('circle', { cx: ix, cy: iy, r: 4.5, fill: '#264653' }, g);
+    txt(g, ix, iy - r * u - 10, '中心', 15, { bold: true, fill: '#264653' });
+    txt(g, ix + r * u / 2, L.By - 6, 'r', 17, { bold: true, fill: '#264653', serif: true, italic: true });
+  },
+  compute(P){
+    return { answers: [
+        { key: 'r', label: '内接円の半径 r', value: P.k, unit: 'cm', tol: 0.06 },
+        { key: 'a', label: '内接円の面積', value: PI314 * P.k * P.k, unit: 'cm²', tol: 0.35 } ],
+      readouts: [
+        { label: '（短い辺＋長い辺−斜辺）÷ 2', value: fmt((3 * P.k + 4 * P.k - 5 * P.k) / 2, 2) + ' ＝ 半径 r と同じ！' },
+        { label: '半径 r ÷ k', value: '1（k を変えても、r は k と同じ値）' },
+        { label: '三角形の面積', value: fmt(3 * P.k * 4 * P.k / 2, 2) + ' cm²' } ] };
+  },
+  hints: [
+    '円の中心から3つの辺までの<ruby>距離<rt>きょり</rt></ruby>は、どれも半径 <span class="var">r</span> と同じです。中心と各頂点を結ぶと、三角形が3つに分かれます。',
+    '中心から3辺へ、半径を引いてみましょう。（このヒントを開くと、図に補助線が出ます）',
+    '3つの小さい三角形は、どれも高さが <span class="var">r</span>。全部の面積を合わせると、大きな三角形の面積 ＝ <span class="var">r</span> ×（3辺の合計）÷ 2。ここから <span class="var">r</span> ＝（短い辺＋長い辺−斜辺）÷ 2 と分かります。'
+  ],
+  explain: P => '中心から3辺に引いた半径は、どれも <span class="var">r</span>。三角形を3つに分けると、面積の合計は <span class="var">r</span> ×（' + fmt(3 * P.k, 2) + '＋' + fmt(4 * P.k, 2) + '＋' + fmt(5 * P.k, 2) + '）÷ 2。'
+    + '一方、大きな三角形の面積は ' + fmt(3 * P.k, 2) + ' × ' + fmt(4 * P.k, 2) + ' ÷ 2 ＝ ' + fmt(6 * P.k * P.k, 2) + ' cm²。'
+    + 'この2つが等しいことから <span class="var">r</span> ＝ <b>' + fmt(P.k, 2) + ' cm</b>、円の面積は 3.14 × ' + fmt(P.k, 2) + ' × ' + fmt(P.k, 2) + ' ＝ <b>' + fmt(PI314 * P.k * P.k, 2) + ' cm²</b> です。'
+    + '三平方の定理の王道ともいえる、各地の算額に残る名問題です。',
+  animate(g, P){
+    const L = this.layout(P), u = L.u, ix = L.Bx + P.k * u, iy = L.By - P.k * u;
+    const tris = [ `${ix},${iy} ${L.Bx},${L.By} ${L.Ax},${L.Ay}`, `${ix},${iy} ${L.Ax},${L.Ay} ${L.Cx},${L.Cy}`, `${ix},${iy} ${L.Cx},${L.Cy} ${L.Bx},${L.By}` ];
+    tris.forEach((pts, i) => { const p = el('polygon', { points: pts, fill: 'rgba(200,50,50,.28)', opacity: 0 }, g);
+      p.style.transition = 'opacity 500ms'; setTimeout(() => p.setAttribute('opacity', .9), 300 + i * 550);
+      setTimeout(() => p.setAttribute('opacity', .25), 900 + i * 550); });
+    txt(g, 320, 448, '高さ r の三角形 3つに分解！', 19, { bold: true, fill: '#C83232' });
+  },
+  history: '直角三角形と内接円は、算額の最も代表的なテーマの一つです。内接円の半径が「（2辺の和−斜辺）÷2」で求まることは、和算家たちが好んで絵馬に残しました。三平方の定理（ピタゴラスの定理）と並ぶ、和算の王道です。',
+  guide: '補助線（中心から3辺への半径）を引かせる前に、「円の中心はどこにあると思う？」と問いかけます。3つの小三角形の高さがすべて r であることに気づけば、式は自然に立ちます。'
+},
+{
+  id: 'lv3', level: 'Lv.3', title: '大円に接する4つの小円',
+  params: () => ({ R: 10 }),
+  sliders: [ { key: 'R', label: '大円の半径 R', min: 6, max: 14, step: 0.5, unit: 'cm' } ],
+  stem: P => '大きな円（半径 <span class="var">R</span> ＝ ' + fmt(P.R, 1) + ' cm）の中に、同じ大きさの小さい円が4つ、互いに接し、大きな円にも接するように入っています。'
+    + '小さい円の半径 <span class="var">r</span> を求めましょう。<span class="rad">2</span> ＝ 1.414 として計算してかまいません。',
+  layout: P => ({ cx: 320, cy: 232, s: 15 }),
+  draw(g, P){
+    const L = this.layout(P), s = L.s, R = P.R, r = R * (Math.SQRT2 - 1), rp = r * s;
+    el('circle', { cx: L.cx, cy: L.cy, r: R * s, fill: '#FBF3E3', stroke: '#2B2B2B', 'stroke-width': 2.6 }, g);
+    [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(d => {
+      el('circle', { cx: L.cx + d[0] * rp, cy: L.cy + d[1] * rp, r: rp, fill: 'rgba(212,163,115,.45)', stroke: '#8A5A33', 'stroke-width': 2.2 }, g); });
+    el('circle', { cx: L.cx, cy: L.cy, r: 4, fill: '#2B2B2B' }, g);
+    txt(g, L.cx, L.cy - R * s - 12, 'R ＝ ' + fmt(R, 1) + ' cm', 18, { bold: true });
+    return { handles: [ { x: L.cx + R * s, y: L.cy, apply: (dx, dy, P0) => ({ R: Math.min(14, Math.max(6, P0.R + dx / s)) }) } ] };
+  },
+  solution(g, P){
+    const L = this.layout(P), s = L.s, R = P.R, r = R * (Math.SQRT2 - 1), rp = r * s;
+    const c1x = L.cx + rp, c1y = L.cy - rp;
+    const len = Math.hypot(c1x - L.cx, c1y - L.cy), ux = (c1x - L.cx) / len, uy = (c1y - L.cy) / len;
+    el('line', { x1: L.cx, y1: L.cy, x2: c1x, y2: c1y, stroke: '#264653', 'stroke-width': 4 }, g);
+    el('line', { x1: c1x, y1: c1y, x2: L.cx + ux * R * s, y2: L.cy + uy * R * s, stroke: '#C83232', 'stroke-width': 4 }, g);
+    el('line', { x1: c1x, y1: c1y, x2: c1x + rp, y2: c1y, stroke: '#2A6F77', 'stroke-width': 2.6, 'stroke-dasharray': '6 4' }, g);
+    el('circle', { cx: c1x, cy: c1y, r: 4, fill: '#264653' }, g);
+    txt(g, (L.cx + c1x) / 2 - 16, (L.cy + c1y) / 2 - 6, 'r × √2', 16, { bold: true, fill: '#264653' });
+    txt(g, c1x + rp * 0.75, c1y - rp * 0.8, 'r', 18, { bold: true, fill: '#C83232', serif: true, italic: true });
+  },
+  compute(P){
+    const r = P.R * (Math.SQRT2 - 1);
+    return { answers: [ { key: 'r', label: '小さい円の半径 r', value: r, unit: 'cm', tol: 0.09 } ],
+      readouts: [
+        { label: '小円4つの面積 ÷ 大円の面積', value: fmt(4 * Math.pow(Math.SQRT2 - 1, 2), 3) + '（R を変えても変わらない！）' },
+        { label: 'r ÷ R', value: fmt(Math.SQRT2 - 1, 3) + '（＝ √2 − 1。R を変えても変わらない！）' },
+        { label: '中心どうしの距離（斜め）', value: fmt(r * Math.SQRT2, 2) + ' cm（＝ r × √2）' } ] };
+  },
+  hints: [
+    '大円の中心と、1つの小円の中心を結んでみましょう。その線をのばすと、大円のふちまで届きます。',
+    '中心どうしを結ぶ斜めの線と、小円の半径を引いてみましょう。（このヒントを開くと、図に補助線が出ます）',
+    '斜めの中心間距離は、直角三角形の斜辺なので <span class="var">r</span> × <span class="rad">2</span>。大円の半径 <span class="var">R</span> ＝ <span class="var">r</span> × <span class="rad">2</span> ＋ <span class="var">r</span> ＝ <span class="var">r</span> ×（<span class="rad">2</span> ＋ 1）。だから <span class="var">r</span> ＝ <span class="var">R</span> ÷（<span class="rad">2</span> ＋ 1）です。'
+  ],
+  explain: P => '大円の中心から小円の中心までの距離は、縦・横ともに <span class="var">r</span> なので、斜辺の公式から <span class="var">r</span> × <span class="rad">2</span>。'
+    + 'そこに小円の半径 <span class="var">r</span> を足すと大円の半径 <span class="var">R</span> になるので、<span class="var">R</span> ＝ <span class="var">r</span>（<span class="rad">2</span> ＋ 1）。'
+    + 'よって <span class="var">r</span> ＝ ' + fmt(P.R, 1) + ' ÷ 2.414 ＝ <b>' + fmt(P.R * (Math.SQRT2 - 1), 2) + ' cm</b>。'
+    + '比 <span class="var">r</span> ÷ <span class="var">R</span> ＝ <span class="rad">2</span> − 1 ≒ 0.414 は、大きさを変えても変わりません。円どうしが接する問題を扱う「円理（えんり）」は、和算の花形でした。',
+  animate(g, P){
+    const L = this.layout(P), s = L.s, R = P.R, r = R * (Math.SQRT2 - 1), rp = r * s;
+    const c1x = L.cx + rp, c1y = L.cy - rp, len = Math.hypot(rp, rp), ux = rp / len, uy = -rp / len;
+    const seg1 = el('line', { x1: L.cx, y1: L.cy, x2: c1x, y2: c1y, stroke: '#264653', 'stroke-width': 6, opacity: 0 }, g);
+    const seg2 = el('line', { x1: c1x, y1: c1y, x2: L.cx + ux * R * s, y2: L.cy + uy * R * s, stroke: '#C83232', 'stroke-width': 6, opacity: 0 }, g);
+    seg1.style.transition = 'opacity 500ms'; seg2.style.transition = 'opacity 500ms';
+    setTimeout(() => seg1.setAttribute('opacity', .85), 300);
+    setTimeout(() => seg2.setAttribute('opacity', .85), 900);
+    txt(g, 320, 452, 'R ＝ r√2 ＋ r に分解！', 19, { bold: true, fill: '#C83232' });
+  },
+  history: '円が互いに接する配置を扱う「円理」は、関孝和らが発展させた和算の花形分野です。大きな円に小さな円を詰める問題は、各地の算額に数多く残り、現代の「円詰め込み問題」にもつながっています。',
+  guide: '中心どうしを結ぶ発想が出るかどうかが山場です。出ない場合は「大円の中心から、小円の中心まで物差しを当ててみよう」と促します。縦・横がどちらも r であることから、斜辺が r√2 になる流れを押さえます。'
+}
+];
+/* オリジナル算額（メーカー製）を問題モジュールに変換 */
+function customProblem(c){
+  return { id: c.id, level: 'オリジナル', title: c.title, custom: true, data: c,
+    params: () => ({}), sliders: [],
+    stem: () => c.stem.replace(/</g, '&lt;').replace(/\n/g, '<br>'),
+    draw(g){ drawShapes(g, c.shapes); return { handles: [] }; },
+    solution(){},
+    compute(){ return { answers: [ { key: 'a', label: '答え', value: c.answer, unit: c.unit || '', tol: Math.max(0.05, Math.abs(c.answer) * 0.02) } ],
+      readouts: [ { label: '作った人の算額', value: '補助線を引いて考えてみましょう' } ] }; },
+    hints: [ '図をよく見て、長さや形の関係を探しましょう。', '補助線モードで、中心や頂点を結ぶ線を引いてみましょう。', '単位に気をつけて、式を立ててみましょう。' ],
+    explain: () => (c.explain ? c.explain.replace(/</g, '&lt;') : 'お見事です。この算額はオリジナル算額メーカーで作られました。'),
+    animate(){}, history: 'この算額は、オリジナル算額メーカーで作られた作品です。', guide: 'メーカーで作られた算額です。作った人の工夫をクラスで共有しましょう。' };
+}
+function allProblems(){ return PROBLEMS.concat(store.custom.map(customProblem)); }
+function findProb(id){ return allProblems().find(p => p.id === id); }
+/* メーカーの図形を描く（生徒画面・提示・プリント共通） */
+function drawShapes(g, shapes){
+  (shapes || []).forEach(sh => {
+    if(sh.type === 'square'){ const h = sh.size / 2;
+      const r = el('rect', { x: sh.cx - h, y: sh.cy - h, width: sh.size, height: sh.size, fill: 'rgba(212,163,115,.35)', stroke: '#2B2B2B', 'stroke-width': 2.4, transform: `rotate(${sh.rot || 0} ${sh.cx} ${sh.cy})` }, g); }
+    else if(sh.type === 'circle'){ el('circle', { cx: sh.cx, cy: sh.cy, r: sh.size / 2, fill: 'rgba(38,70,83,.12)', stroke: '#264653', 'stroke-width': 2.4 }, g); }
+    else if(sh.type === 'triangle'){ const h = sh.size / 2, hh = sh.size * 0.866 / 2;
+      const pts = [ [0, -hh], [h, hh], [-h, hh] ].map(p => { const a = (sh.rot || 0) * Math.PI / 180;
+        return (sh.cx + p[0] * Math.cos(a) - p[1] * Math.sin(a)) + ',' + (sh.cy + p[0] * Math.sin(a) + p[1] * Math.cos(a)); }).join(' ');
+      el('polygon', { points: pts, fill: 'rgba(200,50,50,.16)', stroke: '#C83232', 'stroke-width': 2.4 }, g); }
+    else if(sh.type === 'line'){ el('line', { x1: sh.cx, y1: sh.cy, x2: sh.x2, y2: sh.y2, stroke: '#264653', 'stroke-width': 3 } , g);
+      el('circle', { cx: sh.cx, cy: sh.cy, r: 4, fill: '#264653' }, g); el('circle', { cx: sh.x2, cy: sh.y2, r: 4, fill: '#264653' }, g); }
+  });
+}
+
+/* ================= 生徒用 ================= */
+let cur = null; /* { prob, P, strokes: [], drawMode, color, solShown, fig } */
+function svgPoint(svg, evt){ const pt = svg.createSVGPoint(); pt.x = evt.clientX; pt.y = evt.clientY;
+  const m = svg.getScreenCTM(); return m ? pt.matrixTransform(m.inverse()) : { x: 0, y: 0 }; }
+function renderProbList(){
+  $('probList').innerHTML = '';
+  allProblems().forEach(p => {
+    const b = document.createElement('button'); b.className = 'prob-item';
+    b.innerHTML = '<span class="lv">' + p.level + '</span><div class="tt"></div>'
+      + '<div class="small">' + (p.custom ? 'オリジナル算額メーカーの作品' : 'タップして挑戦') + '</div>'
+      + (store.solved[p.id] ? '<span class="stamp-mini">奉納<br>解決済</span>' : '');
+    b.querySelector('.tt').textContent = p.title;
+    b.addEventListener('click', () => openProblem(p.id));
+    $('probList').appendChild(b);
+  });
+}
+function openProblem(id){
+  const prob = findProb(id); if(!prob) return;
+  cur = { prob, P: prob.params(), strokes: [], drawMode: false, color: '#264653', solShown: false, fig: null, drawing: null, dragH: null };
+  $('studentList').style.display = 'none'; $('stampBook').style.display = 'none'; $('studentPlay').style.display = '';
+  $('playSolved').textContent = store.solved[id] ? '（この算額は解決済みです。もう一度挑戦できます）' : '';
+  $('explainCard').style.display = 'none'; $('playMsg').textContent = '';
+  buildPlay();
+}
+function buildPlay(){
+  const prob = cur.prob, P = cur.P;
+  $('playTitle').textContent = prob.level + '　' + prob.title;
+  $('playStem').innerHTML = prob.stem(P);
+  /* スライダー */
+  const sb = $('playSliders'); sb.innerHTML = '';
+  prob.sliders.forEach(sl => {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = '<label class="lb">' + sl.label + '：<b class="slVal"></b></label>';
+    const inp = document.createElement('input'); inp.type = 'range';
+    inp.min = sl.min; inp.max = sl.max; inp.step = sl.step; inp.value = P[sl.key];
+    const val = wrap.querySelector('.slVal');
+    const paint = () => { val.textContent = fmt(P[sl.key], 2) + (sl.unit ? ' ' + sl.unit : ''); };
+    inp.addEventListener('input', () => { P[sl.key] = parseFloat(inp.value); paint(); drawStage(); refreshNums(); });
+    wrap.appendChild(inp); sb.appendChild(wrap); paint();
+  });
+  /* ヒント */
+  const hb = $('playHints'); hb.innerHTML = '';
+  prob.hints.forEach((h, i) => {
+    const d = document.createElement('div'); d.className = 'hint';
+    d.innerHTML = '<button class="hhead">💡 ヒント' + (i + 1) + '（' + ['着眼点', '補助線', '式の立て方'][i] + '）</button><div class="hbody">' + h + '</div>';
+    d.querySelector('.hhead').addEventListener('click', () => {
+      d.classList.toggle('open');
+      if(i === 1 && d.classList.contains('open')) setSolution(true);
+    });
+    hb.appendChild(d);
+  });
+  drawStage(); refreshNums();
+}
+function drawStage(){
+  const svg = $('stageSvg'); svg.innerHTML = '';
+  const gFig = el('g', {}, svg), gSol = el('g', { id: 'gSol' }, svg),
+        gDraw = el('g', { id: 'gDraw' }, svg), gAnim = el('g', { id: 'gAnim' }, svg);
+  cur.fig = cur.prob.draw(gFig, cur.P) || {};
+  cur.prob.solution(gSol, cur.P);
+  gSol.style.display = cur.solShown ? '' : 'none';
+  cur.strokes.forEach(st => paintStroke(gDraw, st));
+  cur.gDraw = gDraw; cur.gSol = gSol; cur.gAnim = gAnim;
+  /* ドラッグハンドル */
+  (cur.fig.handles || []).forEach(h => {
+    const c = el('circle', { cx: h.x, cy: h.y, r: 17, fill: 'rgba(200,50,50,.18)', stroke: '#C83232', 'stroke-width': 2, 'stroke-dasharray': '4 3', class: 'drag-handle' }, svg);
+    c.dataset.hi = (cur.fig.handles || []).indexOf(h);
+  });
+}
+function paintStroke(g, st){ const p = el('path', { d: st.d, fill: 'none', stroke: st.c, 'stroke-width': 3.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g); return p; }
+function setSolution(on){ cur.solShown = on; if(cur.gSol) cur.gSol.style.display = on ? '' : 'none'; }
+function refreshNums(){
+  const c = cur.prob.compute(cur.P);
+  $('playStem').innerHTML = cur.prob.stem(cur.P);
+  $('playReadout').innerHTML = c.readouts.map(r => '<div>' + r.label + '：<b>' + r.value + '</b></div>').join('');
+  const ab = $('playAnswers'); const old = {};
+  ab.querySelectorAll('input').forEach(i => old[i.dataset.k] = i.value);
+  ab.innerHTML = c.answers.map(a => '<label class="lb">' + a.label + '</label>'
+    + '<div style="display:flex; gap:8px; align-items:center"><input type="number" step="any" inputmode="decimal" data-k="' + a.key + '" placeholder="数字を入力" value="' + (old[a.key] || '') + '"><span style="white-space:nowrap; font-weight:700">' + a.unit + '</span></div>').join('');
+}
+/* --- キャンバス操作（ドラッグ＆お絵描き）。受け手は window 側 --- */
+(function(){
+  const svg = $('stageSvg');
+  let dragCtx = null;
+  svg.addEventListener('pointerdown', e => {
+    if(!cur) return;
+    const p = svgPoint(svg, e);
+    if(cur.drawMode){
+      cur.drawing = { d: 'M ' + p.x.toFixed(1) + ' ' + p.y.toFixed(1), c: cur.color, path: paintStroke(cur.gDraw, { d: '', c: cur.color }) };
+      cur.drawing.path.setAttribute('d', cur.drawing.d);
+      e.preventDefault(); return;
+    }
+    const hs = (cur.fig && cur.fig.handles) || [];
+    for(const h of hs){ if(Math.hypot(p.x - h.x, p.y - h.y) <= 30){ dragCtx = { h, sx: p.x, sy: p.y, P0: Object.assign({}, cur.P) }; e.preventDefault(); return; } }
+  });
+  window.addEventListener('pointermove', e => {
+    if(!cur) return;
+    const p = svgPoint(svg, e);
+    if(cur.drawing){ cur.drawing.d += ' L ' + p.x.toFixed(1) + ' ' + p.y.toFixed(1); cur.drawing.path.setAttribute('d', cur.drawing.d); }
+    else if(dragCtx){ const np = dragCtx.h.apply(p.x - dragCtx.sx, p.y - dragCtx.sy, dragCtx.P0);
+      Object.assign(cur.P, np); syncSliders(); drawStage(); refreshNums(); }
+  });
+  window.addEventListener('pointerup', () => {
+    if(cur && cur.drawing){ cur.strokes.push({ d: cur.drawing.d, c: cur.drawing.c }); cur.drawing = null; }
+    dragCtx = null;
+  });
+})();
+function syncSliders(){
+  $('playSliders').querySelectorAll('input[type="range"]').forEach((inp, i) => {
+    const sl = cur.prob.sliders[i]; if(sl){ inp.value = cur.P[sl.key];
+      const v = inp.parentElement.querySelector('.slVal'); if(v) v.textContent = fmt(cur.P[sl.key], 2) + (sl.unit ? ' ' + sl.unit : ''); } });
+}
+$('drawToggle').addEventListener('click', () => { if(!cur) return; cur.drawMode = !cur.drawMode;
+  $('drawToggle').textContent = '補助線モード：' + (cur.drawMode ? 'ON' : 'OFF'); });
+document.querySelectorAll('.drawColor').forEach(b => b.addEventListener('click', () => { if(cur) cur.color = b.dataset.c; }));
+$('drawUndo').addEventListener('click', () => { if(!cur) return; cur.strokes.pop(); if(cur.gDraw){ cur.gDraw.innerHTML = ''; cur.strokes.forEach(st => paintStroke(cur.gDraw, st)); } });
+$('drawClear').addEventListener('click', () => { if(!cur) return; cur.strokes = []; if(cur.gDraw) cur.gDraw.innerHTML = ''; });
+$('backToList').addEventListener('click', () => { $('studentPlay').style.display = 'none'; $('studentList').style.display = ''; renderProbList(); });
+$('playCheck').addEventListener('click', () => {
+  if(!cur) return;
+  const c = cur.prob.compute(cur.P);
+  let okCount = 0;
+  c.answers.forEach(a => { const inp = document.querySelector('#playAnswers input[data-k="' + a.key + '"]');
+    const v = inp ? parseFloat(inp.value) : NaN;
+    if(!isNaN(v) && Math.abs(v - a.value) <= a.tol) okCount++; });
+  const msg = $('playMsg');
+  if(okCount === c.answers.length){
+    store.solved[cur.prob.id] = Date.now(); save(); sndOK();
+    msg.style.color = '#2F7D4F'; msg.textContent = '🎉 正解です！ 算額を奉納しました。';
+    $('playSolved').textContent = '（この算額は解決済みです）';
+    const fx = $('stampFx'); fx.classList.add('on'); sndStamp();
+    setTimeout(() => fx.classList.remove('on'), 1700);
+    $('explainCard').style.display = '';
+    $('explainBody').innerHTML = cur.prob.explain(cur.P);
+    cur.prob.animate(cur.gAnim, cur.P, cur.fig);
+    $('explainCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    sndNG(); msg.style.color = '#C83232';
+    msg.textContent = c.answers.length > 1
+      ? 'おしい！ ' + okCount + ' / ' + c.answers.length + ' が合っています。図を動かしたり、ヒントを見たりして、もう一度考えてみましょう。'
+      : 'おしい！ 図を動かしたり、ヒントを見たりして、もう一度考えてみましょう。';
+  }
+});
+/* --- スタンプ帳 --- */
+$('openStamps').addEventListener('click', () => { renderStamps(); $('studentList').style.display = 'none'; $('stampBook').style.display = ''; });
+$('backFromStamps').addEventListener('click', () => { $('stampBook').style.display = 'none'; $('studentList').style.display = ''; });
+function renderStamps(){
+  $('stampGrid').innerHTML = '';
+  allProblems().forEach(p => {
+    const got = !!store.solved[p.id];
+    const d = document.createElement('div'); d.className = 'stamp-cell' + (got ? ' got' : '');
+    d.innerHTML = '<div class="ring">' + (got ? '奉納<br>解決済' : '未解決') + '</div><div class="nm"></div><div class="small">' + p.level + '</div>';
+    d.querySelector('.nm').textContent = p.title;
+    $('stampGrid').appendChild(d);
+  });
+}
+/* --- 設定トグル --- */
+function paintToggles(){ $('tgRuby').textContent = 'ふりがな：' + (store.settings.ruby ? 'ON' : 'OFF');
+  $('tgMute').textContent = '音：' + (store.settings.mute ? 'OFF' : 'ON');
+  document.body.classList.toggle('no-ruby', !store.settings.ruby); }
+$('tgRuby').addEventListener('click', () => { store.settings.ruby = !store.settings.ruby; save(); paintToggles(); });
+$('tgMute').addEventListener('click', () => { store.settings.mute = !store.settings.mute; save(); paintToggles(); });
+
+/* ================= 先生用 ================= */
+let pres = { prob: null, P: null, aux: false, ans: false };
+function fillProbSelects(){
+  const opts = allProblems().map(p => '<option value="' + p.id + '">' + p.level + '　' + p.title.replace(/</g, '&lt;') + '</option>').join('');
+  $('presProb').innerHTML = opts; $('sheetProb').innerHTML = opts;
+}
+function drawInto(svg, prob, P, withSol){
+  svg.innerHTML = '';
+  const gF = el('g', {}, svg), gS = el('g', {}, svg);
+  prob.draw(gF, P); prob.solution(gS, P);
+  gS.style.display = withSol ? '' : 'none';
+  return gS;
+}
+function renderPresent(){
+  const prob = findProb($('presProb').value) || PROBLEMS[0];
+  pres.prob = prob; pres.P = prob.params();
+  drawPresent(); paintPresSliders();
+}
+function drawPresent(){
+  pres.gSol = drawInto($('presSvg'), pres.prob, pres.P, pres.aux);
+  $('presAnsBox').innerHTML = '答え：' + pres.prob.compute(pres.P).answers.map(a => a.label + ' ＝ <b>' + fmt(a.value, 2) + ' ' + a.unit + '</b>').join('　／　');
+}
+function paintPresSliders(){
+  const sb = $('presSliders'); sb.innerHTML = '';
+  pres.prob.sliders.forEach(sl => {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = '<label class="lb">' + sl.label + '：<b class="slVal"></b></label>';
+    const inp = document.createElement('input'); inp.type = 'range';
+    inp.min = sl.min; inp.max = sl.max; inp.step = sl.step; inp.value = pres.P[sl.key];
+    const val = wrap.querySelector('.slVal');
+    const paint = () => val.textContent = fmt(pres.P[sl.key], 2) + (sl.unit ? ' ' + sl.unit : '');
+    inp.addEventListener('input', () => { pres.P[sl.key] = parseFloat(inp.value); paint(); drawPresent(); });
+    wrap.appendChild(inp); sb.appendChild(wrap); paint();
+  });
+}
+$('presProb').addEventListener('change', renderPresent);
+$('presAux').addEventListener('click', () => { pres.aux = !pres.aux;
+  $('presAux').textContent = '補助線（解法）：' + (pres.aux ? '表示中' : '隠す'); drawPresent(); });
+$('presAns').addEventListener('click', () => { pres.ans = !pres.ans;
+  $('presAns').textContent = '答え：' + (pres.ans ? '表示中' : '隠す'); $('presAnsBox').style.display = pres.ans ? '' : 'none'; drawPresent(); });
+$('presFull').addEventListener('click', () => { const ema = $('presSvg').closest('.ema');
+  if(document.fullscreenElement) document.exitFullscreen(); else if(ema.requestFullscreen) ema.requestFullscreen(); });
+/* --- ワークシート --- */
+let sheetKind = 'student';
+function buildSheet(){
+  const prob = findProb($('sheetProb').value) || PROBLEMS[0];
+  const P = prob.params();
+  const host = $('sheet'); host.innerHTML = '';
+  const prev = $('sheetPreview'); prev.innerHTML = '';
+  [host, prev].forEach((target, ti) => {
+    const isPrint = ti === 0;
+    const wrap = document.createElement('div');
+    const title = (sheetKind === 'student' ? '算額ワークシート' : '算額ワークシート（先生用）') + '　' + prob.level + '「' + prob.title + '」';
+    wrap.innerHTML = '<h1>' + title + '</h1>'
+      + '<div class="meta"><span>名前：＿＿＿＿＿＿＿＿＿＿</span><span>日付：＿＿月＿＿日</span><span>算額ラボ</span></div>'
+      + '<div class="stem"></div>';
+    wrap.querySelector('.stem').innerHTML = prob.stem(P);
+    const svg = document.createElementNS(SVGNS, 'svg'); svg.setAttribute('viewBox', '0 0 640 480');
+    if(!isPrint){ svg.style.width = '100%'; svg.style.height = 'auto'; }
+    const gF = el('g', {}, svg), gS = el('g', {}, svg);
+    prob.draw(gF, P); prob.solution(gS, P);
+    gS.style.display = sheetKind === 'teacher' ? '' : 'none';
+    wrap.appendChild(svg);
+    if(sheetKind === 'student'){
+      const th = document.createElement('div');
+      th.innerHTML = '<h2>考えるスペース（図に補助線を引いたり、式を書いたりしましょう）</h2>'
+        + '<div class="think" style="height:' + (isPrint ? '44mm' : '140px') + '; background:repeating-linear-gradient(180deg,#fff 0 27px,#EFE8D8 27px 28px)"></div>'
+        + '<h2>振り返り</h2><p>・今日の算額で「なるほど」と思ったこと：</p>'
+        + '<div class="think" style="height:' + (isPrint ? '16mm' : '46px') + '"></div>'
+        + '<p>・友達に説明するとしたら、どう言う？：</p>'
+        + '<div class="think" style="height:' + (isPrint ? '16mm' : '46px') + '"></div>';
+      wrap.appendChild(th);
+    } else {
+      const th = document.createElement('div');
+      th.innerHTML = '<h2>答えと詳しい解説</h2><p><b>答え：' + prob.compute(P).answers.map(a => a.label + ' ＝ ' + fmt(a.value, 2) + ' ' + a.unit).join('　／　') + '</b></p>'
+        + '<div class="expl"></div>'
+        + '<h2>和算の歴史コラム</h2><p class="hist"></p>'
+        + '<h2>指導のポイント</h2><p class="guide"></p>';
+      th.querySelector('.expl').innerHTML = prob.explain(P);
+      th.querySelector('.hist').textContent = prob.history;
+      th.querySelector('.guide').textContent = prob.guide;
+      wrap.appendChild(th);
+    }
+    const foot = document.createElement('div'); foot.className = 'foot';
+    foot.innerHTML = '算額ラボ（Sangaku Lab）― 図は問題の数値から正確に描かれています。'
+      + '<div class="cm5">↑ この線が 5cm なら実寸で印刷されています（左端から右端まで 50mm）</div>';
+    wrap.appendChild(foot);
+    target.appendChild(wrap);
+  });
+}
+$('sheetKindStudent').addEventListener('click', () => { sheetKind = 'student';
+  $('sheetKindStudent').classList.add('on'); $('sheetKindTeacher').classList.remove('on'); buildSheet(); });
+$('sheetKindTeacher').addEventListener('click', () => { sheetKind = 'teacher';
+  $('sheetKindTeacher').classList.add('on'); $('sheetKindStudent').classList.remove('on'); buildSheet(); });
+$('sheetProb').addEventListener('change', buildSheet);
+$('sheetPrint').addEventListener('click', () => window.print());
+/* --- 進捗モニター（ダミー） --- */
+function renderMonitor(){
+  const approaches = ['対角線・中心を結んだ', '半径を引いた', '面積を分けて考えた', 'まだ補助線なし'];
+  const rows = [];
+  let ok = 0, hint = 0, stuck = 0;
+  for(let i = 1; i <= 30; i++){
+    const r = ((i * 2654435761) % 1000) / 100;
+    const st = r < 4 ? 'ok' : (r < 7.5 ? 'hint' : 'stuck');
+    if(st === 'ok') ok++; else if(st === 'hint') hint++; else stuck++;
+    rows.push({ n: i, st, ap: approaches[i % 4], prob: PROBLEMS[i % 3].title });
+  }
+  $('monitorSummary').innerHTML = '<p><span class="st-ok">自力で解決：' + ok + '名</span>　<span class="st-hint">ヒント閲覧中：' + hint + '名</span>　<span class="st-stuck">つまずき中：' + stuck + '名</span></p>';
+  $('monitorTable').innerHTML = '<tr><th>出席番号</th><th>取り組み中の算額</th><th>ステータス</th><th>補助線アプローチ</th></tr>'
+    + rows.map(r => '<tr><td>' + r.n + '番</td><td>' + r.prob + '</td><td class="' + (r.st === 'ok' ? 'st-ok' : r.st === 'hint' ? 'st-hint' : 'st-stuck') + '">'
+      + (r.st === 'ok' ? '自力で解決' : r.st === 'hint' ? 'ヒント閲覧中' : 'つまずき中') + '</td><td>' + r.ap + '</td></tr>').join('');
+  const counts = [11, 9, 6, 4];
+  $('monitorTrend').innerHTML = approaches.map((a, i) =>
+    '<div class="bar-row"><span style="min-width:9.5em">' + a + '</span><span class="bar"><i style="width:' + (counts[i] / 30 * 100) + '%"></i></span><span>' + counts[i] + '名</span></div>').join('');
+}
+/* --- 先生タブ --- */
+function teacherTab(which){
+  ['Present', 'Sheet', 'Monitor'].forEach(k => { $('tTab' + k).classList.toggle('on', k === which); });
+  $('tPresent').style.display = which === 'Present' ? '' : 'none';
+  $('tSheet').style.display = which === 'Sheet' ? '' : 'none';
+  $('tMonitor').style.display = which === 'Monitor' ? '' : 'none';
+  if(which === 'Sheet') buildSheet();
+  if(which === 'Monitor') renderMonitor();
+}
+$('tTabPresent').addEventListener('click', () => teacherTab('Present'));
+$('tTabSheet').addEventListener('click', () => teacherTab('Sheet'));
+$('tTabMonitor').addEventListener('click', () => teacherTab('Monitor'));
+
+/* ================= オリジナル算額メーカー ================= */
+let mk = { shapes: [], sel: -1 };
+function mkRender(){
+  const svg = $('mkSvg'); svg.innerHTML = '';
+  const defs = el('defs', {}, svg);
+  const pat = el('pattern', { id: 'mkGrid', width: 32, height: 32, patternUnits: 'userSpaceOnUse' }, defs);
+  el('path', { d: 'M32 0H0V32', fill: 'none', stroke: '#E7DCC4', 'stroke-width': 1 }, pat);
+  el('rect', { x: 0, y: 0, width: 640, height: 480, fill: 'url(#mkGrid)' }, svg);
+  const g = el('g', {}, svg); drawShapes(g, mk.shapes);
+  mk.shapes.forEach((sh, i) => {
+    if(i !== mk.sel) return;
+    if(sh.type === 'line'){
+      [[sh.cx, sh.cy], [sh.x2, sh.y2]].forEach(p => el('circle', { cx: p[0], cy: p[1], r: 13, fill: 'rgba(200,50,50,.25)', stroke: '#C83232', 'stroke-width': 2 }, svg));
+    } else {
+      el('rect', { x: sh.cx - sh.size / 2 - 7, y: sh.cy - (sh.type === 'triangle' ? sh.size * 0.866 / 2 : sh.size / 2) - 7,
+        width: sh.size + 14, height: (sh.type === 'triangle' ? sh.size * 0.866 : sh.size) + 14,
+        fill: 'none', stroke: '#C83232', 'stroke-width': 2, 'stroke-dasharray': '5 4' }, svg);
+    }
+  });
+  const names = { square: '正方形', circle: '円', triangle: '正三角形', line: '補助線' };
+  $('mkSelBox').style.display = mk.sel >= 0 ? '' : 'none';
+  if(mk.sel >= 0){ $('mkSelName').textContent = '選択中：' + names[mk.shapes[mk.sel].type];
+    $('mkSize').value = mk.shapes[mk.sel].size || 120; }
+  renderMkList();
+}
+function renderMkList(){
+  const box = $('mkList');
+  if(!store.custom.length){ box.innerHTML = ''; return; }
+  box.innerHTML = '<b>🎋 作った算額</b>';
+  store.custom.forEach(c => {
+    const row = document.createElement('div'); row.className = 'toolbar'; row.style.alignItems = 'center';
+    const nm = document.createElement('span'); nm.textContent = '・「' + c.title + '」' + (store.solved[c.id] ? '（解決済み）' : '');
+    const del = document.createElement('button'); del.className = 'btn sub sm'; del.textContent = '消す';
+    del.addEventListener('click', () => { if(confirm('この算額を消しますか？')){
+      store.custom = store.custom.filter(x => x.id !== c.id); delete store.solved[c.id]; save();
+      renderMkList(); renderProbList(); fillProbSelects(); } });
+    row.appendChild(nm); row.appendChild(del); box.appendChild(row);
+  });
+}
+/* 追加・ドラッグ（受け手は window） */
+document.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => {
+  const t = b.dataset.add;
+  const sh = t === 'line' ? { type: 'line', cx: 220, cy: 240, x2: 420, y2: 240, size: 200, rot: 0 }
+    : { type: t, cx: 320, cy: 235, size: 130, rot: 0, x2: 0, y2: 0 };
+  mk.shapes.push(sh); mk.sel = mk.shapes.length - 1; mkRender();
+}));
+(function(){
+  const svg = $('mkSvg'); let drag = null;
+  const hitShape = p => {
+    for(let i = mk.shapes.length - 1; i >= 0; i--){ const sh = mk.shapes[i];
+      if(sh.type === 'line'){
+        const d1 = Math.hypot(p.x - sh.cx, p.y - sh.cy), d2 = Math.hypot(p.x - sh.x2, p.y - sh.y2);
+        const dl = Math.abs((sh.y2 - sh.cy) * p.x - (sh.x2 - sh.cx) * p.y + sh.x2 * sh.cy - sh.y2 * sh.cx) / Math.max(1, Math.hypot(sh.x2 - sh.cx, sh.y2 - sh.cy));
+        if(d1 <= 26) return { i, part: 'p1' }; if(d2 <= 26) return { i, part: 'p2' };
+        if(dl <= 16 && p.x >= Math.min(sh.cx, sh.x2) - 8 && p.x <= Math.max(sh.cx, sh.x2) + 8) return { i, part: 'move' };
+      } else if(Math.abs(p.x - sh.cx) <= sh.size / 2 + 12 && Math.abs(p.y - sh.cy) <= sh.size / 2 + 12) return { i, part: 'move' }; }
+    return null;
+  };
+  svg.addEventListener('pointerdown', e => {
+    const p = svgPoint(svg, e); const hit = hitShape(p);
+    if(hit){ mk.sel = hit.i; drag = { ...hit, sx: p.x, sy: p.y, orig: JSON.parse(JSON.stringify(mk.shapes[hit.i])) }; mkRender(); e.preventDefault(); }
+    else { mk.sel = -1; mkRender(); }
+  });
+  window.addEventListener('pointermove', e => {
+    if(!drag) return;
+    const p = svgPoint(svg, e); const sh = mk.shapes[drag.i], dx = p.x - drag.sx, dy = p.y - drag.sy, o = drag.orig;
+    if(drag.part === 'move'){ sh.cx = o.cx + dx; sh.cy = o.cy + dy; if(sh.type === 'line'){ sh.x2 = o.x2 + dx; sh.y2 = o.y2 + dy; } }
+    else if(drag.part === 'p1'){ sh.cx = p.x; sh.cy = p.y; }
+    else if(drag.part === 'p2'){ sh.x2 = p.x; sh.y2 = p.y; }
+    mkRender();
+  });
+  window.addEventListener('pointerup', () => drag = null);
+})();
+$('mkSize').addEventListener('input', () => { const sh = mk.shapes[mk.sel]; if(!sh) return;
+  const ns = parseFloat($('mkSize').value);
+  if(sh.type === 'line'){ const mx = (sh.cx + sh.x2) / 2, my = (sh.cy + sh.y2) / 2, dx = sh.x2 - sh.cx, dy = sh.y2 - sh.cy;
+    const L = Math.max(1, Math.hypot(dx, dy)), k = ns / L;
+    sh.cx = mx - dx * k / 2; sh.cy = my - dy * k / 2; sh.x2 = mx + dx * k / 2; sh.y2 = my + dy * k / 2; sh.size = ns; }
+  else sh.size = ns;
+  mkRender();
+});
+$('mkRotate').addEventListener('click', () => { const sh = mk.shapes[mk.sel]; if(!sh) return;
+  if(sh.type === 'line'){ const mx = (sh.cx + sh.x2) / 2, my = (sh.cy + sh.y2) / 2, a = Math.PI / 12;
+    const rot = (x, y) => [mx + (x - mx) * Math.cos(a) - (y - my) * Math.sin(a), my + (x - mx) * Math.sin(a) + (y - my) * Math.cos(a)];
+    [sh.cx, sh.cy] = rot(sh.cx, sh.cy); [sh.x2, sh.y2] = rot(sh.x2, sh.y2); }
+  else sh.rot = ((sh.rot || 0) + 15) % 360;
+  mkRender();
+});
+$('mkDelete').addEventListener('click', () => { if(mk.sel < 0) return;
+  mk.shapes.splice(mk.sel, 1); mk.sel = -1; mkRender(); });
+$('mkReset').addEventListener('click', () => { if(confirm('キャンバスを空にしますか？')){ mk.shapes = []; mk.sel = -1; mkRender(); } });
+$('mkSave').addEventListener('click', () => {
+  const title = $('mkTitle').value.trim(), stem = $('mkStem').value.trim();
+  const ans = parseFloat($('mkAnswer').value), unit = $('mkUnit').value.trim(), expl = $('mkExplain').value.trim();
+  const msg = $('mkMsg');
+  if(!mk.shapes.length){ msg.style.color = '#C83232'; msg.textContent = 'まず図形を置いてください。'; return; }
+  if(!title || !stem || isNaN(ans)){ msg.style.color = '#C83232'; msg.textContent = 'タイトル・問題文・答え（数字）を入れてください。'; return; }
+  store.custom.push({ id: 'cu' + Date.now(), title, stem, answer: ans, unit, explain: expl,
+    shapes: JSON.parse(JSON.stringify(mk.shapes)) });
+  save(); msg.style.color = '#2F7D4F'; msg.textContent = '🎋 絵馬ができました！「生徒用」の一覧に並んでいます。';
+  renderMkList(); renderProbList(); fillProbSelects();
+});
+/* ================= モード切替と初期化 ================= */
+function setMode(m){
+  ['Student', 'Teacher', 'Maker'].forEach(k => { $('mode' + k).classList.toggle('on', k === m); });
+  $('viewStudent').classList.toggle('on', m === 'Student');
+  $('viewTeacher').classList.toggle('on', m === 'Teacher');
+  $('viewMaker').classList.toggle('on', m === 'Maker');
+  if(m === 'Teacher' && !pres.prob) renderPresent();
+  window.scrollTo(0, 0);
+}
+$('modeStudent').addEventListener('click', () => setMode('Student'));
+$('modeTeacher').addEventListener('click', () => setMode('Teacher'));
+$('modeMaker').addEventListener('click', () => setMode('Maker'));
+renderProbList(); fillProbSelects(); paintToggles(); mkRender();
+
+</script>
+</body>
+</html>
