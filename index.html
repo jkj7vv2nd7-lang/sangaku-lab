@@ -107,6 +107,16 @@ table.monitor th{background:#F3EAD8;}
 /* ===== メーカー ===== */
 .palette{display:flex; gap:8px; flex-wrap:wrap;}
 .palette button{min-height:50px; padding:8px 14px; border-radius:12px; border:2px solid var(--wood-d); background:#FBF3E3; font-weight:800;}
+.ema-art{display:block; width:min(430px,94vw); height:auto; margin:0 auto 10px;
+  transform-origin:50% -4%; animation:emaSway 7.5s ease-in-out infinite;}
+@keyframes emaSway{0%,100%{transform:rotate(-1.1deg)} 50%{transform:rotate(1.1deg)}}
+.ema-art .dr{stroke-dasharray:1; stroke-dashoffset:1; animation:emaDraw 11s ease-in-out infinite;}
+.ema-art .d2{animation-delay:.7s} .ema-art .d3{animation-delay:1.4s} .ema-art .d4{animation-delay:2.1s} .ema-art .d5{animation-delay:2.6s}
+@keyframes emaDraw{0%{stroke-dashoffset:1; opacity:1} 26%{stroke-dashoffset:0; opacity:1}
+  84%{stroke-dashoffset:0; opacity:1} 93%{stroke-dashoffset:0; opacity:0} 100%{stroke-dashoffset:1; opacity:0}}
+.ema-art .fl{opacity:0; animation:emaFill 11s ease-in-out infinite;}
+@keyframes emaFill{0%,30%{opacity:0} 42%{opacity:1} 84%{opacity:1} 93%,100%{opacity:0}}
+@media (prefers-reduced-motion: reduce){ .ema-art, .ema-art .dr, .ema-art .fl{animation:none;} .ema-art .dr{stroke-dashoffset:0;} .ema-art .fl{opacity:1;} }
 footer{max-width:880px; margin:0 auto; padding:0 12px 26px; color:#8A7B66; font-size:.85rem;}
 /* ===== 印刷シート ===== */
 #sheet{display:none;}
@@ -131,6 +141,24 @@ footer{max-width:880px; margin:0 auto; padding:0 12px 26px; color:#8A7B66; font-
   <div class="rope"></div>
   <h1>算額ラボ<span class="seal">算額</span></h1>
   <p class="sub">Sangaku Lab 〜<ruby>和算<rt>わさん</rt></ruby>でひらめく<ruby>探究<rt>たんきゅう</rt></ruby>ノート〜</p>
+  <svg class="ema-art" viewBox="0 0 460 176" role="img" aria-label="算額の絵馬のイラスト（アニメーション）">
+    <path d="M236 6 L262 34" stroke="#C83232" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M224 6 L198 34" stroke="#C83232" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M230 26 L292 62 L292 158 L168 158 L168 62 Z" fill="#B07D4F" stroke="#8A5A33" stroke-width="3"/>
+    <path d="M230 40 L280 70 L280 148 L180 148 L180 70 Z" fill="#FFFDF4"/>
+    <g fill="none" stroke-linecap="round">
+      <rect class="dr d2" x="196" y="76" width="68" height="68" pathLength="1" stroke="#2B2B2B" stroke-width="2.6"/>
+      <circle class="dr d3" cx="230" cy="110" r="34" pathLength="1" stroke="#264653" stroke-width="2.6"/>
+      <path class="dr d4" d="M196 144 L264 76" pathLength="1" stroke="#C83232" stroke-width="2.8"/>
+    </g>
+    <polygon class="fl" points="196,144 264,144 264,76" fill="rgba(200,50,50,.20)"/>
+    <circle class="dr d5" cx="322" cy="90" r="17" pathLength="1" fill="none" stroke="#E8C896" stroke-width="2.4"/>
+    <circle class="dr d5" cx="322" cy="124" r="17" pathLength="1" fill="none" stroke="#E8C896" stroke-width="2.4"/>
+    <circle class="dr d5" cx="356" cy="107" r="24" pathLength="1" fill="none" stroke="#F3E2C7" stroke-width="2.2" stroke-dasharray="1"/>
+    <text x="392" y="96" font-size="15" fill="#FFF3DF" font-family="Hiragino Mincho ProN,serif" font-weight="700">和算の</text>
+    <text x="392" y="118" font-size="15" fill="#FFF3DF" font-family="Hiragino Mincho ProN,serif" font-weight="700">心を</text>
+    <text x="392" y="140" font-size="15" fill="#FFF3DF" font-family="Hiragino Mincho ProN,serif" font-weight="700">いまに</text>
+  </svg>
   <nav class="modes" aria-label="モード切替">
     <button id="modeStudent" class="on">🎓 生徒用：算額に挑戦！</button>
     <button id="modeTeacher">🏫 先生用：授業ダッシュボード</button>
