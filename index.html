@@ -409,6 +409,112 @@ const PROBLEMS = [
   history: '正方形と内接円の面積比べは、和算の入門として各地の算額に残る形です。江戸時代の和算家たちは、円の面積の比が大きさによらないことを、図の美しさとともに絵馬に残しました。',
   guide: 'まずスライダーで大きさを変えさせ、「変わらないもの」を探させるのが要点です。対角線を引く前に「三角形の面積は正方形のどれくらいに見える？」と予想させると、半分という結果が印象に残ります。'
 },
+/* ===== 追加6問（2026-11-15）: グループA = Lv.1の2問 ===== */
+{
+  id: 'lv4', level: 'Lv.1', title: '正方形の中の4つの円',
+  params: () => ({ a: 10 }),
+  sliders: [ { key: 'a', label: '正方形の一辺', min: 6, max: 14, step: 0.5, unit: 'cm' } ],
+  stem: P => '一辺が <span class="var">a</span> ＝ ' + fmt(P.a, 1) + ' cm の正方形の中に、同じ大きさの円が4つ、2つ×2つに並んで、辺や<ruby>隣<rt>となり</rt></ruby>の円にぴったり接しています。<br>'
+    + '（1）円1つの<ruby>半径<rt>はんけい</rt></ruby>　（2）4つの円の<ruby>面積<rt>めんせき</rt></ruby>の<ruby>合計<rt>ごうけい</rt></ruby>　を求めましょう。円周率は 3.14 とします。',
+  layout: P => { const S = P.a * 24, cx = 320, cy = 232; return { S, x0: cx - S / 2, y0: cy - S / 2, cx, cy }; },
+  draw(g, P){
+    const L = this.layout(P), S = L.S, x0 = L.x0, y0 = L.y0, rp = S / 4;
+    el('rect', { x: x0, y: y0, width: S, height: S, fill: '#FBF3E3', stroke: '#2B2B2B', 'stroke-width': 2.6 }, g);
+    const fills = ['rgba(38,70,83,.12)', 'rgba(200,50,50,.10)', 'rgba(200,50,50,.10)', 'rgba(38,70,83,.12)'];
+    const cs = [];
+    [[x0 + rp, y0 + rp], [x0 + 3 * rp, y0 + rp], [x0 + rp, y0 + 3 * rp], [x0 + 3 * rp, y0 + 3 * rp]].forEach((c, i) => {
+      cs.push(el('circle', { cx: c[0], cy: c[1], r: rp, fill: fills[i], stroke: '#264653', 'stroke-width': 2.4 }, g));
+    });
+    txt(g, L.cx, y0 + S + 30, 'a ＝ ' + fmt(P.a, 1) + ' cm', 18, { bold: true });
+    return { handles: [ { x: x0 + S, y: y0 + S, apply: (dx, dy, P0) => ({ a: Math.min(14, Math.max(6, P0.a + dx / 24)) }) } ], circles: cs };
+  },
+  solution(g, P){
+    const L = this.layout(P), S = L.S, x0 = L.x0, y0 = L.y0, rp = S / 4;
+    el('line', { x1: x0, y1: y0 + rp, x2: x0 + S, y2: y0 + rp, stroke: '#264653', 'stroke-width': 2.6, 'stroke-dasharray': '7 5' }, g);
+    el('line', { x1: x0 + rp, y1: y0 + rp, x2: x0 + 2 * rp, y2: y0 + rp, stroke: '#C83232', 'stroke-width': 4 }, g);
+    el('circle', { cx: x0 + rp, cy: y0 + rp, r: 4.5, fill: '#264653' }, g);
+    txt(g, x0 + S / 2, y0 - 12, '半径 ＝ a ÷ 4', 16, { bold: true, fill: '#264653' });
+  },
+  compute(P){
+    const r = P.a / 4;
+    return { answers: [
+        { key: 'r', label: '（1）円1つの半径', value: r, unit: 'cm', tol: 0.06 },
+        { key: 's', label: '（2）4つの円の面積の合計', value: 4 * PI314 * r * r, unit: 'cm²', tol: 0.8 } ],
+      readouts: [
+        { label: '円の直径 ÷ 一辺', value: '0.5' },
+        { label: '4つの円の面積 ÷ 正方形の面積', value: '≒ 0.785' },
+        { label: '正方形の面積', value: fmt(P.a * P.a, 1) + ' cm²' } ] };
+  },
+  hints: [
+    '円が横に2つ並ぶと、正方形の一辺にぴったり収まります。直径が何個分で一辺になるか数えてみましょう。',
+    '補助線として、円の中心を結ぶ線と、中心から辺までの半径を引いてみましょう。（このヒントを開くと、図に補助線が出ます）',
+    '直径 × 2 ＝ 一辺 a です。だから半径 ＝ a ÷ 4。面積は 3.14 × 半径 × 半径 × 4つ分です。'
+  ],
+  explain: P => '円の<ruby>直径<rt>ちょっけい</rt></ruby>2つ分が一辺 ' + fmt(P.a, 1) + ' cm に等しいので、直径は ' + fmt(P.a / 2, 1) + ' cm、半径は <b>' + fmt(P.a / 4, 2) + ' cm</b> です。'
+    + '円1つの面積は 3.14 × ' + fmt(P.a / 4, 2) + ' × ' + fmt(P.a / 4, 2) + '、4つ分で <b>' + fmt(4 * PI314 * Math.pow(P.a / 4, 2), 2) + ' cm²</b>。'
+    + '面白いことに、4つの円の面積の合計は、大きな内接円1つの面積とちょうど同じになります。',
+  animate(g, P, fig){
+    if(fig && fig.circles) fig.circles.forEach((c, i) => setTimeout(() => {
+      c.style.transition = 'opacity 300ms'; c.setAttribute('opacity', .25);
+      setTimeout(() => c.setAttribute('opacity', 1), 320);
+    }, i * 380));
+    txt(g, 320, 452, '4つ合わせると 大きな円1つ分！', 19, { bold: true, fill: '#C83232' });
+  },
+  history: '正方形の中に円を並べる形は、和算の代表的な問題の一つです。円の並べ方と余りのすき間を考える問題は、各地の算額に数多く残されています。',
+  guide: '「直径が何個分で一辺になるか」を数えさせるのが要点です。最後に「大きな円1つ分と同じ面積」という落ちを伝えると、比の美しさが印象に残ります。'
+},
+{
+  id: 'lv5', level: 'Lv.1', title: '半円に内接する円',
+  params: () => ({ R: 10 }),
+  sliders: [ { key: 'R', label: '半円の半径', min: 6, max: 14, step: 0.5, unit: 'cm' } ],
+  stem: P => '<ruby>半径<rt>はんけい</rt></ruby> <span class="var">R</span> ＝ ' + fmt(P.R, 1) + ' cm の半円の中に、<ruby>直径<rt>ちょっけい</rt></ruby>と<ruby>弧<rt>こ</rt></ruby>の両方にぴったり接する円が入っています。<br>'
+    + '（1）小さい円の半径 <span class="var">r</span>　（2）小さい円の<ruby>面積<rt>めんせき</rt></ruby>　を求めましょう。円周率は 3.14 とします。',
+  layout: P => { const s = 22, cx = 320, by = 400; return { s, cx, by, Rp: P.R * s, rp: P.R / 2 * s }; },
+  draw(g, P){
+    const L = this.layout(P), Rp = L.Rp, cx = L.cx, by = L.by;
+    el('path', { d: `M ${cx - Rp} ${by} A ${Rp} ${Rp} 0 0 1 ${cx + Rp} ${by} Z`, fill: '#FBF3E3', stroke: '#2B2B2B', 'stroke-width': 2.6 }, g);
+    el('line', { x1: cx - Rp, y1: by, x2: cx + Rp, y2: by, stroke: '#2B2B2B', 'stroke-width': 2.6 }, g);
+    el('circle', { cx: cx, cy: by - L.rp, r: L.rp, fill: 'rgba(200,50,50,.16)', stroke: '#C83232', 'stroke-width': 2.4 }, g);
+    el('circle', { cx: cx, cy: by, r: 4.5, fill: '#2B2B2B' }, g);
+    txt(g, cx, by + 32, '半円の半径 R ＝ ' + fmt(P.R, 1) + ' cm', 18, { bold: true });
+    return { handles: [ { x: cx + Rp, y: by, apply: (dx, dy, P0) => ({ R: Math.min(14, Math.max(6, P0.R + dx / 22)) }) } ] };
+  },
+  solution(g, P){
+    const L = this.layout(P), cx = L.cx, by = L.by;
+    el('line', { x1: cx, y1: by, x2: cx, y2: by - L.Rp, stroke: '#264653', 'stroke-width': 3, 'stroke-dasharray': '7 5' }, g);
+    el('circle', { cx: cx, cy: by - L.rp, r: 4.5, fill: '#264653' }, g);
+    txt(g, cx + 14, by - L.rp - L.rp / 2, '中心どうしの距離 ＝ R − r', 16, { bold: true, fill: '#264653', anchor: 'start' });
+  },
+  compute(P){
+    const r = P.R / 2;
+    return { answers: [
+        { key: 'r', label: '（1）小さい円の半径 r', value: r, unit: 'cm', tol: 0.08 },
+        { key: 's', label: '（2）小さい円の面積', value: PI314 * r * r, unit: 'cm²', tol: 0.8 } ],
+      readouts: [
+        { label: 'r ÷ R', value: '0.5' },
+        { label: '小さい円の面積 ÷ 半円の面積', value: '0.5' },
+        { label: '半円の面積', value: fmt(PI314 * P.R * P.R / 2, 1) + ' cm²' } ] };
+  },
+  hints: [
+    '小さい円の中心は、半円のちょうど真ん中の真上にあります。中心が直径からどれだけ離れているか考えてみましょう。',
+    '補助線として、半円の中心と小さい円の中心を結ぶ線と、真上の接点までの線を引いてみましょう。（このヒントを開くと、図に補助線が出ます）',
+    '半円の中心から小さい円の中心までの距離は、小さい円が直径に接するので r。その距離は、大きな半径から小さい半径を引いた R − r でもあります。'
+  ],
+  explain: P => '半円の中心から小さい円の中心までの<ruby>距離<rt>きょり</rt></ruby>は、小さい円が<ruby>直径<rt>ちょっけい</rt></ruby>に接するので <span class="var">r</span> です。'
+    + '一方、その距離は大きな半径から小さい半径を引いた <span class="var">R</span> − <span class="var">r</span> とも言えます。だから <span class="var">r</span> ＝ <span class="var">R</span> − <span class="var">r</span>、つまり <span class="var">r</span> ＝ <span class="var">R</span> ÷ 2 ＝ <b>' + fmt(P.R / 2, 1) + ' cm</b>。'
+    + '面積は 3.14 × ' + fmt(P.R / 2, 1) + ' × ' + fmt(P.R / 2, 1) + ' ＝ <b>' + fmt(PI314 * Math.pow(P.R / 2, 2), 2) + ' cm²</b> で、ちょうど半円の半分になります。',
+  animate(g, P, fig){
+    const L = this.layout(P), cx = L.cx, by = L.by;
+    const seg = el('line', { x1: cx, y1: by, x2: cx, y2: by - L.rp, stroke: '#264653', 'stroke-width': 6, opacity: 0 }, g);
+    const seg2 = el('line', { x1: cx, y1: by - L.rp, x2: cx, y2: by - L.Rp, stroke: '#C83232', 'stroke-width': 6, opacity: 0 }, g);
+    seg.style.transition = 'opacity 500ms'; seg2.style.transition = 'opacity 500ms';
+    setTimeout(() => seg.setAttribute('opacity', .85), 300);
+    setTimeout(() => seg2.setAttribute('opacity', .85), 950);
+    txt(g, 320, 452, 'r ＝ R − r … だから r は R の半分！', 19, { bold: true, fill: '#C83232' });
+  },
+  history: '半円の中に円を収める問題は、和算の代表的な問題の一つです。「中心どうしの距離を2通りに表す」という考え方は、円理の基本の手つきでした。',
+  guide: '「同じ距離を2通りに表す」発想がこの問題の核心です。補助線を引く前に、中心どうしの距離の表し方を問いかけると効果的です。'
+},
 {
   id: 'lv2', level: 'Lv.2', title: '直角三角形と内接円',
   params: () => ({ k: 2 }),
@@ -471,6 +577,114 @@ const PROBLEMS = [
   history: '直角三角形と内接円は、算額の最も代表的なテーマの一つです。内接円の半径が「（2辺の和−斜辺）÷2」で求まることは、和算家たちが好んで絵馬に残しました。三平方の定理（ピタゴラスの定理）と並ぶ、和算の王道です。',
   guide: '補助線（中心から3辺への半径）を引かせる前に、「円の中心はどこにあると思う？」と問いかけます。3つの小三角形の高さがすべて r であることに気づけば、式は自然に立ちます。'
 },
+/* ===== グループB = Lv.2の2問 ===== */
+{
+  id: 'lv6', level: 'Lv.2', title: '扇形に内接する円',
+  params: () => ({ R: 10 }),
+  sliders: [ { key: 'R', label: '扇形の半径', min: 6, max: 14, step: 0.5, unit: 'cm' } ],
+  stem: P => '<ruby>半径<rt>はんけい</rt></ruby> <span class="var">R</span> ＝ ' + fmt(P.R, 1) + ' cm、<ruby>中心角<rt>ちゅうしんかく</rt></ruby> 90° の<ruby>扇形<rt>おうぎがた</rt></ruby>の中に、2つの<ruby>辺<rt>へん</rt></ruby>と<ruby>弧<rt>こ</rt></ruby>のすべてにぴったり接する円が入っています。<br>'
+    + '（1）円の半径 <span class="var">r</span>　（2）円の<ruby>面積<rt>めんせき</rt></ruby>　を求めましょう。√2 ＝ 1.414、円周率は 3.14 とします。',
+  layout: P => { const s = 250 / P.R, ox = 170, oy = 350; const r = P.R * (Math.SQRT2 - 1), d = r * Math.SQRT2;
+    return { s, ox, oy, Rp: 250, rp: r * s, ccx: ox + d * s / Math.SQRT2, ccy: oy - d * s / Math.SQRT2 }; },
+  draw(g, P){
+    const L = this.layout(P), ox = L.ox, oy = L.oy, Rp = L.Rp;
+    el('path', { d: `M ${ox} ${oy} L ${ox + Rp} ${oy} A ${Rp} ${Rp} 0 0 0 ${ox} ${oy - Rp} Z`, fill: '#FBF3E3', stroke: '#2B2B2B', 'stroke-width': 2.6 }, g);
+    el('circle', { cx: L.ccx, cy: L.ccy, r: L.rp, fill: 'rgba(200,50,50,.16)', stroke: '#C83232', 'stroke-width': 2.4 }, g);
+    txt(g, ox + Rp / 2, oy + 30, 'R ＝ ' + fmt(P.R, 1) + ' cm', 18, { bold: true });
+    return { handles: [ { x: ox + Rp, y: oy, apply: (dx, dy, P0) => ({ R: Math.min(14, Math.max(6, P0.R + dx / (250 / P0.R))) }) } ] };
+  },
+  solution(g, P){
+    const L = this.layout(P), ox = L.ox, oy = L.oy;
+    el('line', { x1: ox, y1: oy, x2: ox + L.Rp / Math.SQRT2, y2: oy - L.Rp / Math.SQRT2, stroke: '#264653', 'stroke-width': 2.6, 'stroke-dasharray': '7 5' }, g);
+    el('line', { x1: L.ccx, y1: L.ccy, x2: L.ccx, y2: oy, stroke: '#C83232', 'stroke-width': 3.4 }, g);
+    el('line', { x1: L.ccx, y1: L.ccy, x2: ox, y2: L.ccy, stroke: '#C83232', 'stroke-width': 3.4 }, g);
+    el('circle', { cx: L.ccx, cy: L.ccy, r: 4.5, fill: '#264653' }, g);
+    txt(g, L.ccx + 16, L.ccy - L.rp - 8, 'R ＝ r√2 ＋ r', 16, { bold: true, fill: '#264653', anchor: 'start' });
+  },
+  compute(P){
+    const r = P.R * (Math.SQRT2 - 1);
+    return { answers: [
+        { key: 'r', label: '（1）円の半径 r', value: r, unit: 'cm', tol: 0.09 },
+        { key: 's', label: '（2）円の面積', value: PI314 * r * r, unit: 'cm²', tol: 1.2 } ],
+      readouts: [
+        { label: 'r ÷ R', value: '≒ 0.414（√2 − 1）' },
+        { label: '扇形の中心から円の中心までの距離 ÷ R', value: '≒ 0.586' },
+        { label: '扇形の面積', value: fmt(PI314 * P.R * P.R / 4, 1) + ' cm²' } ] };
+  },
+  hints: [
+    '円の中心は、90° の角を半分にする 45° の線の上にあります。中心から2つの辺までの距離を考えてみましょう。',
+    '補助線として、角の二等分線と、中心から2つの辺への半径を引いてみましょう。（このヒントを開くと、図に補助線が出ます）',
+    '中心から辺までの距離が r なので、中心は角から r√2 のところ。そこから弧まで r 進むと R に届きます。r√2 ＋ r ＝ R です。'
+  ],
+  explain: P => '円の中心から2つの<ruby>辺<rt>へん</rt></ruby>までの<ruby>距離<rt>きょり</rt></ruby>はどちらも <span class="var">r</span>。だから中心は45° の線の上にあり、角からの距離は <span class="var">r</span>√2 です。'
+    + '弧に接するので、そこから <span class="var">r</span> 進めば弧に届きます。<span class="var">r</span>√2 ＋ <span class="var">r</span> ＝ <span class="var">R</span> を解くと <span class="var">r</span> ＝ <span class="var">R</span>（√2 − 1）＝ <b>' + fmt(P.R * (Math.SQRT2 - 1), 2) + ' cm</b>。'
+    + '面積は <b>' + fmt(PI314 * Math.pow(P.R * (Math.SQRT2 - 1), 2), 1) + ' cm²</b> です。Lv.3 の「大円に接する4つの小円」と同じ √2 − 1 が現れるのが面白いところです。',
+  animate(g, P, fig){
+    const L = this.layout(P), ox = L.ox, oy = L.oy;
+    const seg1 = el('line', { x1: ox, y1: oy, x2: L.ccx, y2: L.ccy, stroke: '#264653', 'stroke-width': 6, opacity: 0 }, g);
+    const ux = (L.ccx - ox), uy = (L.ccy - oy), len = Math.hypot(ux, uy);
+    const seg2 = el('line', { x1: L.ccx, y1: L.ccy, x2: L.ccx + ux / len * L.rp, y2: L.ccy + uy / len * L.rp, stroke: '#C83232', 'stroke-width': 6, opacity: 0 }, g);
+    seg1.style.transition = 'opacity 500ms'; seg2.style.transition = 'opacity 500ms';
+    setTimeout(() => seg1.setAttribute('opacity', .85), 300);
+    setTimeout(() => seg2.setAttribute('opacity', .85), 950);
+    txt(g, 320, 452, 'R ＝ r√2 ＋ r に分解！', 19, { bold: true, fill: '#C83232' });
+  },
+  history: '扇形（おうぎ形）に円を収める問題は、和算の代表的な問題の一つです。45° の二等分線と √2 の関係を使う、円理の基本形として親しまれてきました。',
+  guide: '中心が二等分線上にあることに気づけるかが山場です。「中心から辺までの距離はどうなる？」という発問から入ると、r√2 の関係にたどり着けます。'
+},
+{
+  id: 'lv7', level: 'Lv.2', title: '直角三角形と2つの正方形',
+  params: () => ({ k: 2 }),
+  sliders: [ { key: 'k', label: '辺の長さの倍率', min: 1, max: 2.5, step: 0.25, unit: '' } ],
+  stem: P => '直角三角形の2つの<ruby>辺<rt>へん</rt></ruby>の長さは 3<span class="var">k</span> ＝ ' + fmt(3 * P.k, 2) + ' cm と 4<span class="var">k</span> ＝ ' + fmt(4 * P.k, 2) + ' cm です。それぞれの辺の外側に、その辺を一辺とする正方形をくっつけました。<br>'
+    + '（1）小さい正方形の<ruby>面積<rt>めんせき</rt></ruby>　（2）2つの正方形の面積の<ruby>合計<rt>ごうけい</rt></ruby>　を求めましょう。',
+  layout: P => { const u = 13, bx = 270, by = 255; return { u, bx, by,
+    Ax: bx, Ay: by - 4 * P.k * u, Cx: bx + 3 * P.k * u, Cy: by }; },
+  draw(g, P){
+    const L = this.layout(P), u = L.u, k = P.k;
+    el('rect', { x: L.bx - 4 * k * u, y: L.Ay, width: 4 * k * u, height: 4 * k * u, fill: 'rgba(38,70,83,.14)', stroke: '#264653', 'stroke-width': 2.4 }, g);
+    el('rect', { x: L.bx, y: L.Cy, width: 3 * k * u, height: 3 * k * u, fill: 'rgba(200,50,50,.12)', stroke: '#C83232', 'stroke-width': 2.4 }, g);
+    el('polygon', { points: `${L.bx},${L.by} ${L.Ax},${L.Ay} ${L.Cx},${L.Cy}`, fill: '#FBF3E3', stroke: '#2B2B2B', 'stroke-width': 2.6 }, g);
+    el('path', { d: `M ${L.bx + 12} ${L.by} L ${L.bx + 12} ${L.by - 12} L ${L.bx} ${L.by - 12}`, fill: 'none', stroke: '#2B2B2B', 'stroke-width': 1.8 }, g);
+    txt(g, L.bx - 4 * k * u / 2, L.Ay - 12, '4k ＝ ' + fmt(4 * k, 2) + ' cm', 17, { bold: true, fill: '#264653' });
+    txt(g, L.bx + 3 * k * u / 2, L.Cy + 3 * k * u + 28, '3k ＝ ' + fmt(3 * k, 2) + ' cm', 17, { bold: true, fill: '#C83232' });
+    return { handles: [ { x: L.Cx, y: L.Cy, apply: (dx, dy, P0) => ({ k: Math.min(2.5, Math.max(1, P0.k + dx / (3 * 13))) }) } ] };
+  },
+  solution(g, P){
+    const L = this.layout(P), u = L.u, k = P.k, ox = 4 * k * u, oy = -3 * k * u;
+    el('polygon', { points: `${L.Ax},${L.Ay} ${L.Cx},${L.Cy} ${L.Cx + ox},${L.Cy + oy} ${L.Ax + ox},${L.Ay + oy}`,
+      fill: 'rgba(212,163,115,.25)', stroke: '#8A5A33', 'stroke-width': 3, 'stroke-dasharray': '8 5' }, g);
+    txt(g, (L.Ax + L.Cx + ox) / 2 + 8, (L.Ay + L.Cy + oy) / 2 - 6, '斜辺の正方形', 16, { bold: true, fill: '#8A5A33' });
+  },
+  compute(P){
+    const k = P.k;
+    return { answers: [
+        { key: 's1', label: '（1）小さい正方形の面積', value: 9 * k * k, unit: 'cm²', tol: 0.8 },
+        { key: 's2', label: '（2）2つの正方形の面積の合計', value: 25 * k * k, unit: 'cm²', tol: 1 } ],
+      readouts: [
+        { label: '大きい正方形の面積 ÷ 小さい正方形の面積', value: '≒ 1.78（16 ÷ 9）' },
+        { label: '斜辺の長さ', value: fmt(5 * k, 2) + ' cm（5k）' },
+        { label: '大きい正方形の面積', value: fmt(16 * k * k, 2) + ' cm²' } ] };
+  },
+  hints: [
+    '正方形の面積は「一辺 × 一辺」。それぞれの辺の長さは、三角形の辺とぴったり同じです。',
+    '補助線として、斜辺の外側にも正方形を描いてみましょう。（このヒントを開くと、図に補助線が出ます）',
+    '小さい方は (3k)² ＝ 9k²、大きい方は (4k)² ＝ 16k²。合計は 25k² で、これは斜辺 5k の正方形 (5k)² と同じになります。'
+  ],
+  explain: P => '辺 3<span class="var">k</span> の正方形は (3<span class="var">k</span>)² ＝ 9<span class="var">k</span>² ＝ <b>' + fmt(9 * P.k * P.k, 2) + ' cm²</b>、辺 4<span class="var">k</span> の正方形は 16<span class="var">k</span>² ＝ ' + fmt(16 * P.k * P.k, 2) + ' cm²。'
+    + '合計は 25<span class="var">k</span>² ＝ <b>' + fmt(25 * P.k * P.k, 2) + ' cm²</b> で、これは斜辺 5<span class="var">k</span> の正方形 (5<span class="var">k</span>)² とちょうど同じです。'
+    + '「2辺の正方形の和 ＝ 斜辺の正方形」――三平方の定理（ピタゴラスの定理）を、面積の図で表した算額らしい問題です。',
+  animate(g, P, fig){
+    const L = this.layout(P), u = L.u, k = P.k, ox = 4 * k * u, oy = -3 * k * u;
+    const hyp = el('polygon', { points: `${L.Ax},${L.Ay} ${L.Cx},${L.Cy} ${L.Cx + ox},${L.Cy + oy} ${L.Ax + ox},${L.Ay + oy}`,
+      fill: 'rgba(212,163,115,.3)', stroke: '#8A5A33', 'stroke-width': 3, opacity: 0 }, g);
+    hyp.style.transition = 'opacity 700ms';
+    setTimeout(() => hyp.setAttribute('opacity', .9), 600);
+    txt(g, 320, 452, '2つの正方形の和 ＝ 斜辺の正方形！', 19, { bold: true, fill: '#C83232' });
+  },
+  history: '直角三角形の辺に正方形をくっつけた「勾股弦（こうこげん）」の図は、中国から日本へ伝わり、和算でも三平方の定理を表す代表的な図として使われてきました。',
+  guide: '先に2つの面積を求めさせ、合計が 25k² になる驚きを味わわせてから、斜辺の正方形を重ねるのが効果的です。三平方の定理の導入に使えます。'
+},
 {
   id: 'lv3', level: 'Lv.3', title: '大円に接する4つの小円',
   params: () => ({ R: 10 }),
@@ -527,6 +741,117 @@ const PROBLEMS = [
   },
   history: '円が互いに接する配置を扱う「円理」は、関孝和らが発展させた和算の花形分野です。大きな円に小さな円を詰める問題は、各地の算額に数多く残り、現代の「円詰め込み問題」にもつながっています。',
   guide: '中心どうしを結ぶ発想が出るかどうかが山場です。出ない場合は「大円の中心から、小円の中心まで物差しを当ててみよう」と促します。縦・横がどちらも r であることから、斜辺が r√2 になる流れを押さえます。'
+},
+/* ===== グループC = Lv.3の2問 ===== */
+{
+  id: 'lv8', level: 'Lv.3', title: '直線に接する3つの円',
+  params: () => ({ R: 8 }),
+  sliders: [ { key: 'R', label: '大きい円の半径', min: 6, max: 14, step: 0.5, unit: 'cm' } ],
+  stem: P => '直線の上に、<ruby>半径<rt>はんけい</rt></ruby> <span class="var">R</span> ＝ ' + fmt(P.R, 1) + ' cm の大きな円が2つ、互いに接して並んでいます。その間と直線の間に、小さい円がぴったりはまっています。<br>'
+    + '（1）小さい円の半径 <span class="var">r</span>　（2）小さい円の<ruby>面積<rt>めんせき</rt></ruby>　を求めましょう。円周率は 3.14 とします。',
+  layout: P => { const s = Math.min(13, 155 / P.R), ly = 405; return { s, ly,
+    c1x: 320 - P.R * s, c2x: 320 + P.R * s, cy: ly - P.R * s, Rp: P.R * s, rp: P.R / 4 * s, scy: ly - P.R / 4 * s }; },
+  draw(g, P){
+    const L = this.layout(P);
+    el('line', { x1: 30, y1: L.ly, x2: 610, y2: L.ly, stroke: '#2B2B2B', 'stroke-width': 3.4 }, g);
+    for(let hx = 60; hx <= 590; hx += 26) el('line', { x1: hx, y1: L.ly, x2: hx - 10, y2: L.ly + 10, stroke: '#2B2B2B', 'stroke-width': 1.6 }, g);
+    el('circle', { cx: L.c1x, cy: L.cy, r: L.Rp, fill: 'rgba(38,70,83,.10)', stroke: '#264653', 'stroke-width': 2.4 }, g);
+    el('circle', { cx: L.c2x, cy: L.cy, r: L.Rp, fill: 'rgba(38,70,83,.10)', stroke: '#264653', 'stroke-width': 2.4 }, g);
+    el('circle', { cx: 320, cy: L.scy, r: L.rp, fill: 'rgba(200,50,50,.20)', stroke: '#C83232', 'stroke-width': 2.4 }, g);
+    txt(g, L.c1x, L.ly + 34, 'R ＝ ' + fmt(P.R, 1) + ' cm', 17, { bold: true });
+    txt(g, L.c2x, L.ly + 34, 'R ＝ ' + fmt(P.R, 1) + ' cm', 17, { bold: true });
+    return { handles: [ { x: L.c2x + L.Rp, y: L.cy, apply: (dx, dy, P0) => ({ R: Math.min(14, Math.max(6, P0.R + dx / Math.min(13, 155 / P0.R))) }) } ] };
+  },
+  solution(g, P){
+    const L = this.layout(P);
+    el('line', { x1: 320, y1: L.scy, x2: L.c1x, y2: L.cy, stroke: '#264653', 'stroke-width': 3 }, g);
+    el('line', { x1: 320, y1: L.scy, x2: L.c2x, y2: L.cy, stroke: '#264653', 'stroke-width': 3 }, g);
+    el('line', { x1: 320, y1: L.scy, x2: 320, y2: L.ly, stroke: '#C83232', 'stroke-width': 3, 'stroke-dasharray': '7 5' }, g);
+    el('circle', { cx: 320, cy: L.scy, r: 4.5, fill: '#264653' }, g);
+    txt(g, 320, L.cy - L.Rp - 14, '中心を結ぶと 直角三角形', 16, { bold: true, fill: '#264653' });
+  },
+  compute(P){
+    const r = P.R / 4;
+    return { answers: [
+        { key: 'r', label: '（1）小さい円の半径 r', value: r, unit: 'cm', tol: 0.06 },
+        { key: 's', label: '（2）小さい円の面積', value: PI314 * r * r, unit: 'cm²', tol: 0.35 } ],
+      readouts: [
+        { label: 'r ÷ R', value: '0.25' },
+        { label: '大きい円と小さい円の中心間の距離 ÷ R', value: '1.25' },
+        { label: '大きい円1つの面積', value: fmt(PI314 * P.R * P.R, 1) + ' cm²' } ] };
+  },
+  hints: [
+    '小さい円の中心は、2つの大きな円のちょうど真ん中の、直線から r の高さのところにあります。',
+    '補助線として、3つの円の中心どうしを結んでみましょう。横 R、縦 R − r、斜め R ＋ r の直角三角形が現れます。（このヒントを開くと、図に補助線が出ます）',
+    '三平方の定理で (R ＋ r)² ＝ R² ＋ (R − r)²。これを解くと r が R だけで表せます。'
+  ],
+  explain: P => '3つの中心を結ぶと、横 <span class="var">R</span>、<ruby>縦<rt>たて</rt></ruby> <span class="var">R</span> − <span class="var">r</span>、斜め <span class="var">R</span> ＋ <span class="var">r</span> の直角三角形になります。'
+    + '三平方の定理 (<span class="var">R</span> ＋ <span class="var">r</span>)² ＝ <span class="var">R</span>² ＋ (<span class="var">R</span> − <span class="var">r</span>)² を解くと、<span class="var">R</span>² ＝ 4<span class="var">R</span><span class="var">r</span>、つまり <span class="var">r</span> ＝ <span class="var">R</span> ÷ 4 ＝ <b>' + fmt(P.R / 4, 2) + ' cm</b>。'
+    + '面積は <b>' + fmt(PI314 * Math.pow(P.R / 4, 2), 2) + ' cm²</b> です。江戸の和算家が「円理」で競い合った、代表的な問題の一つです。',
+  animate(g, P, fig){
+    const L = this.layout(P);
+    const s1 = el('line', { x1: 320, y1: L.scy, x2: L.c1x, y2: L.cy, stroke: '#264653', 'stroke-width': 5, opacity: 0 }, g);
+    const s2 = el('line', { x1: 320, y1: L.scy, x2: L.c2x, y2: L.cy, stroke: '#264653', 'stroke-width': 5, opacity: 0 }, g);
+    s1.style.transition = 'opacity 500ms'; s2.style.transition = 'opacity 500ms';
+    setTimeout(() => { s1.setAttribute('opacity', .85); s2.setAttribute('opacity', .85); }, 350);
+    txt(g, 320, 452, '(R＋r)² ＝ R² ＋ (R−r)² … r は R の ¼！', 19, { bold: true, fill: '#C83232' });
+  },
+  history: '直線と円の間にはまる小円の半径は、和算（円理）の代表的な問題です。中心を結んで直角三角形を作る手法は、関孝和の時代から和算家の基本の技でした。',
+  guide: '中心を結ぶ三角形に気づけるかが全てです。縦の長さが R − r になる理由（中心の高さの差）を丁寧に確認すると、三平方の定理への橋渡しになります。'
+},
+{
+  id: 'lv9', level: 'Lv.3', title: '半円の中の2つの円',
+  params: () => ({ R: 10 }),
+  sliders: [ { key: 'R', label: '半円の半径', min: 6, max: 14, step: 0.5, unit: 'cm' } ],
+  stem: P => '<ruby>半径<rt>はんけい</rt></ruby> <span class="var">R</span> ＝ ' + fmt(P.R, 1) + ' cm の半円の中に、同じ大きさの円が2つ、<ruby>直径<rt>ちょっけい</rt></ruby>と<ruby>弧<rt>こ</rt></ruby>と互いにぴったり接して入っています。<br>'
+    + '（1）円1つの半径 <span class="var">r</span>　（2）2つの円の<ruby>面積<rt>めんせき</rt></ruby>の<ruby>合計<rt>ごうけい</rt></ruby>　を求めましょう。√2 ＝ 1.414、円周率は 3.14 とします。',
+  layout: P => { const s = 22, cx = 320, by = 400, r = P.R * (Math.SQRT2 - 1);
+    return { s, cx, by, Rp: P.R * s, rp: r * s, lx: cx - r * s, rx: cx + r * s, cy: by - r * s }; },
+  draw(g, P){
+    const L = this.layout(P), Rp = L.Rp, cx = L.cx, by = L.by;
+    el('path', { d: `M ${cx - Rp} ${by} A ${Rp} ${Rp} 0 0 1 ${cx + Rp} ${by} Z`, fill: '#FBF3E3', stroke: '#2B2B2B', 'stroke-width': 2.6 }, g);
+    el('line', { x1: cx - Rp, y1: by, x2: cx + Rp, y2: by, stroke: '#2B2B2B', 'stroke-width': 2.6 }, g);
+    el('circle', { cx: L.lx, cy: L.cy, r: L.rp, fill: 'rgba(38,70,83,.14)', stroke: '#264653', 'stroke-width': 2.4 }, g);
+    el('circle', { cx: L.rx, cy: L.cy, r: L.rp, fill: 'rgba(200,50,50,.14)', stroke: '#C83232', 'stroke-width': 2.4 }, g);
+    el('circle', { cx: cx, cy: by, r: 4.5, fill: '#2B2B2B' }, g);
+    txt(g, cx, by + 32, '半円の半径 R ＝ ' + fmt(P.R, 1) + ' cm', 18, { bold: true });
+    return { handles: [ { x: cx + Rp, y: by, apply: (dx, dy, P0) => ({ R: Math.min(14, Math.max(6, P0.R + dx / 22)) }) } ] };
+  },
+  solution(g, P){
+    const L = this.layout(P), cx = L.cx, by = L.by;
+    el('line', { x1: cx, y1: by, x2: L.lx, y2: L.cy, stroke: '#264653', 'stroke-width': 3, 'stroke-dasharray': '7 5' }, g);
+    el('line', { x1: cx, y1: by, x2: L.rx, y2: L.cy, stroke: '#264653', 'stroke-width': 3, 'stroke-dasharray': '7 5' }, g);
+    el('line', { x1: L.lx, y1: L.cy, x2: L.rx, y2: L.cy, stroke: '#C83232', 'stroke-width': 3.4 }, g);
+    txt(g, cx, L.cy - L.rp - 12, '中心までの距離 ＝ R − r', 16, { bold: true, fill: '#264653' });
+  },
+  compute(P){
+    const r = P.R * (Math.SQRT2 - 1);
+    return { answers: [
+        { key: 'r', label: '（1）円1つの半径 r', value: r, unit: 'cm', tol: 0.09 },
+        { key: 's', label: '（2）2つの円の面積の合計', value: 2 * PI314 * r * r, unit: 'cm²', tol: 2 } ],
+      readouts: [
+        { label: 'r ÷ R', value: '≒ 0.414（√2 − 1）' },
+        { label: '2つの円の中心間の距離 ÷ r', value: '2' },
+        { label: '半円の面積', value: fmt(PI314 * P.R * P.R / 2, 1) + ' cm²' } ] };
+  },
+  hints: [
+    'それぞれの円の中心は、直径から r の高さにあり、半円の中心からは横に r だけずれています。',
+    '補助線として、半円の中心と2つの円の中心を結んでみましょう。（このヒントを開くと、図に補助線が出ます）',
+    '半円の中心から円の中心までの距離は √(r² ＋ r²) ＝ r√2。これが R − r に等しくなります。r√2 ＝ R − r を解きましょう。'
+  ],
+  explain: P => '円の中心は、<ruby>直径<rt>ちょっけい</rt></ruby>から <span class="var">r</span> の高さで、半円の中心から横に <span class="var">r</span> ずれています。だから中心どうしの<ruby>距離<rt>きょり</rt></ruby>は √(<span class="var">r</span>²＋<span class="var">r</span>²) ＝ <span class="var">r</span>√2。'
+    + '弧に接するので、この距離は <span class="var">R</span> − <span class="var">r</span> に等しく、<span class="var">r</span>√2 ＝ <span class="var">R</span> − <span class="var">r</span> を解くと <span class="var">r</span> ＝ <span class="var">R</span>（√2 − 1）＝ <b>' + fmt(P.R * (Math.SQRT2 - 1), 2) + ' cm</b>。'
+    + '2つの円の面積の合計は <b>' + fmt(2 * PI314 * Math.pow(P.R * (Math.SQRT2 - 1), 2), 1) + ' cm²</b> です。',
+  animate(g, P, fig){
+    const L = this.layout(P), cx = L.cx, by = L.by;
+    const s1 = el('line', { x1: cx, y1: by, x2: L.lx, y2: L.cy, stroke: '#264653', 'stroke-width': 5, opacity: 0 }, g);
+    const s2 = el('line', { x1: cx, y1: by, x2: L.rx, y2: L.cy, stroke: '#C83232', 'stroke-width': 5, opacity: 0 }, g);
+    s1.style.transition = 'opacity 500ms'; s2.style.transition = 'opacity 500ms';
+    setTimeout(() => { s1.setAttribute('opacity', .85); s2.setAttribute('opacity', .85); }, 350);
+    txt(g, 320, 452, 'r√2 ＝ R − r … また √2 − 1！', 19, { bold: true, fill: '#C83232' });
+  },
+  history: '半円の中に円を並べる問題は、和算の代表的な問題の一つです。√2 − 1 という数は、円理のあちこちに顔を出す、和算家にとって馴染みの数でした。',
+  guide: '中心の位置（高さ r、横のずれ r）を座標のように捉えさせるのが要点です。Lv.6 の扇形と答えの形が同じになる発見も、発展として扱えます。'
 }
 ];
 /* オリジナル算額（メーカー製）を問題モジュールに変換 */
